@@ -1,5 +1,5 @@
 Package: PAA
-Version: 0.99.4
+Version: 1.0.0
 Title: PAA (Protein Array Analyzer)
 Authors@R: c(person("Michael", "Turewicz", role=c("aut", "cre"),
         email="michael.turewicz@rub.de"), person("Martin",
