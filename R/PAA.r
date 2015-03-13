@@ -1,5 +1,5 @@
 ##########################################################################
-#           ProteinArrayAnalyzer (PAA) - version 0.99.4                  #
+#           ProteinArrayAnalyzer (PAA) - version 1.1.1                   #
 ##########################################################################
 #
 #
@@ -1602,12 +1602,12 @@ batchAdjust <- function(elist=NULL, log=NULL){
     }
     if(log){
         elist$E <-
-          ComBat(dat=elist$E, mod=elist$targets$Group,
-          batch=elist$targets$Batch)
+          ComBat(dat=elist$E, mod=factor(elist$targets$Group),
+          batch=factor(elist$targets$Batch))
     }else if(!log){
         elist$E <-
-          2^ComBat(dat=log2(elist$E), mod=elist$targets$Group,
-          batch=elist$targets$Batch)
+          2^ComBat(dat=log2(elist$E), mod=factor(elist$targets$Group),
+          batch=factor(elist$targets$Batch))
     }else{
         stop("ERROR in batchAdjust: log not 'TRUE' or 'FALSE'.")
     }

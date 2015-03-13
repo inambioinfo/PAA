@@ -1,28 +1,24 @@
 Package: PAA
-Version: 1.1.0
+Version: 1.1.1
 Title: PAA (Protein Array Analyzer)
 Authors@R: c(person("Michael", "Turewicz", role=c("aut", "cre"),
-        email="michael.turewicz@rub.de"), person("Martin",
-        "Eisenacher", role=c("ctb", "cre"),
-        email="martin.eisenacher@rub.de"))
+		    email="michael.turewicz@rub.de"),
+	     person("Martin", "Eisenacher", role=c("ctb", "cre"),
+		    email="martin.eisenacher@rub.de"))
 Author: Michael Turewicz [aut, cre], Martin Eisenacher [ctb, cre]
-Maintainer: Michael Turewicz <michael.turewicz@rub.de>, Martin
-        Eisenacher <martin.eisenacher@rub.de>
+Maintainer: Michael Turewicz <michael.turewicz@rub.de>, Martin Eisenacher <martin.eisenacher@rub.de>
 Depends: R (>= 3.0.3), Rcpp (>= 0.10.6.1)
 Imports: e1071, limma, MASS, mRMRe, randomForest, ROCR, sva
 LinkingTo: Rcpp
 Suggests: BiocStyle, RUnit, BiocGenerics, vsn
-Description: PAA imports single color (protein) microarray data that
-        has been saved in gpr file format - esp. ProtoArray data. After
-        pre-processing (background correction, batch filtering,
-        normalization) univariate feature pre-selection is performed
-        (e.g., using the "minimum M statistic" approach - hereinafter
-        referred to as "mMs"). Subsequently, a multivariate feature
-        selection is conducted to discover biomarker candidates.
-        Therefore, either a frequency-based backwards elimination
-        aproach or ensemble feature selection can be used. PAA provides
-        a complete toolbox of analysis tools including several
-        different plots for results examination and evaluation.
+Description: PAA imports single color (protein) microarray data that has been saved in gpr 
+             file format - esp. ProtoArray data. After pre-processing (background correction, 
+             batch filtering, normalization) univariate feature pre-selection is performed 
+             (e.g., using the "minimum M statistic" approach - hereinafter referred to as "mMs"). 
+             Subsequently, a multivariate feature selection is conducted to discover biomarker 
+             candidates. Therefore, either a frequency-based backwards elimination aproach or 
+             ensemble feature selection can be used. PAA provides a complete toolbox of analysis 
+             tools including several different plots for results examination and evaluation. 
 License: BSD_3_clause + file LICENSE
 URL: http://www.medizinisches-proteom-center.de/PAA
 SystemRequirements: C++ software package Random Jungle
