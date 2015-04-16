@@ -1,0 +1,133 @@
+RELEASE HISTORY OF THE "PAA" PACKAGE
+===========================================
+
+CHANGES IN PAA VERSION 1.1.1 [2015-03-13]:
+-----------------------------------------------
+GENERAL
+* No changes.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* Bug in the function batchAdjust() removed.
+  Because the argument "mod" was not passed as factor to sva's
+  function ComBat() errors were thrown and execution stopped
+  for the latest versions of sva. This has been corrected.
+
+CHANGES IN PAA VERSION 1.0.0 [2014-10-13]:
+-----------------------------------------------
+GENERAL
+* First release version.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* No changes.
+
+CHANGES IN PAA VERSION 0.99.4 [2014-10-03]:
+-----------------------------------------------
+GENERAL
+* First release version.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* Corrected \VignetteIndexEntry{} in the vignette Rnw file.
+
+CHANGES IN PAA VERSION 0.99.3 [2014-10-02]:
+-----------------------------------------------
+GENERAL
+* License changed from GPL-3 to “BSD_3_clause + file LICENSE” due to license compatibility.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* Some dummy gpr files added to demonstrate loadGPR() in man pages and vignette.
+* First unit tests added.
+* Native routines registered.
+* Checking runtimes improved.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* Bug fixes in the vignette (e.g., \comment to \bioccomment). Missing vignette preambel added.
+* Bug fixes in the code (e.g., max. line length of 80 characters ensured, "FALSE" instead of "F").
+* Internal functions removed from export in the NAMESPACE.
+
+CHANGES IN PAA VERSION 0.99.2 [2014-08-05]:
+-----------------------------------------------
+GENERAL
+* No changes.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* Minor change in the vignette (changing the selectFeatures()-option selection.method="rj.rfe"
+to selection.method="rf.rfe" to make the code chunks runable on systems without Random Jungle installed).
+
+CHANGES IN PAA VERSION 0.99.1 [2014-08-05]:
+-----------------------------------------------
+GENERAL
+* No changes.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* Hard coded temp directory replaced by a tempdir()-based solution.
+
+CHANGES IN PAA VERSION 0.99.0 [2014-08-03]:
+-----------------------------------------------
+GENERAL
+* NEWS file added.
+* Vignette completed.
+* Documentation completed.
+* General compatibility for Windows, Mac OS X and Linux ensured.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* No changes.
