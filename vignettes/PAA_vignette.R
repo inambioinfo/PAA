@@ -1,4 +1,4 @@
-### R code from vignette source 'C:/R/R-3.1.2/library/PAA_DONT_DELETE/vignettes/PAA_vignette.Rnw'
+### R code from vignette source 'C:/R/R-3.2.0/library/PAA_DONT_DELETE/vignettes/PAA_vignette.Rnw'
 
 ###################################################
 ### code chunk number 1: style
@@ -38,7 +38,7 @@ targets <- list.files(system.file("extdata", package="PAA"),
  pattern = "dummy_targets", full.names=TRUE)
 dummy.elist <- loadGPR(gpr.path=gpr, targets.path=targets)
 save(dummy.elist, file=paste(gpr, "/DummyData.RData",
-   sep=""))
+   sep=""), compress="xz")
 
 
 ###################################################

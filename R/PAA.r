@@ -1,5 +1,5 @@
 ##########################################################################
-#           ProteinArrayAnalyzer (PAA) - version 1.1.1                   #
+#           ProteinArrayAnalyzer (PAA) - version 1.3.1                   #
 ##########################################################################
 #
 #
@@ -905,7 +905,7 @@ noFS <- function(elist=NULL, columns1=NULL, columns2=NULL,
     trainsample1 <- elist$E[,traincols1]
     trainsample2 <- elist$E[,traincols2]
     
-    idx <- paste(elist$genes[,1], elist$genes[,3], elist$genes[,2], sep=" ")
+    idx <- paste(elist$genes$Block,elist$genes$Row,elist$genes$Column)
     p <- rep(0, row.number)
 
     trainsample <- cbind(p, trainsample)
@@ -953,7 +953,7 @@ tTestFS <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
     trainsample1 <- elist$E[,traincols1]
     trainsample2 <- elist$E[,traincols2]
 
-    idx <- paste(elist$genes[,1], elist$genes[,3], elist$genes[,2], sep=" ")
+    idx <- paste(elist$genes$Block,elist$genes$Row,elist$genes$Column)
     p <- vector(mode="numeric", length=row.number)
     for(zeile in 1:row.number) {
         p.tmp <- try(t.test(x=trainsample1[zeile,] ,
@@ -1005,13 +1005,13 @@ tTest <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
         if(p < discard.threshold && 
           (fold > fold.thresh || fold < 1/fold.thresh)) {
             
-            idx.tmp <- paste(elist$genes[zeile,1], " ", elist$genes[zeile,3],
-              " ", elist$genes[zeile,2], sep="")
+            idx.tmp <- paste(elist$genes$Block[zeile],elist$genes$Row[zeile],
+              elist$genes$Column[zeile])
             count <- count+1
-            output.matrix[count,] <- c(idx.tmp, elist$genes[zeile,4],
-              elist$genes[zeile,5], elist$genes[zeile,6], p, mean1, mean2,
+            output.matrix[count,] <- c(idx.tmp, elist$genes$Description[zeile],
+              elist$genes$Name[zeile], elist$genes$ID[zeile], p, mean1, mean2,
               (mean1 / mean2), elist$E[zeile,])
-        }else if(discard.features) {
+        }else if(discard.features) {                                                             
             discard <- c(discard,zeile)
         }
         #message('tTest() - computing p values: ',
@@ -1059,11 +1059,11 @@ mrmr <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
     elist$E <- elist$E[mrmr.idx,]
     elist$genes <- elist$genes[mrmr.idx,]
     idx.tmp <-
-      paste(elist$genes[,1], " ", elist$genes[,3], " ", elist$genes[,2], sep="") 
+      paste(elist$genes$Block,elist$genes$Row,elist$genes$Column) 
     mean1 <- apply(elist$E[,columns1], 1, mean)
     mean2 <- apply(elist$E[,columns2], 1, mean)
-    output.matrix <- cbind(idx.tmp, elist$genes[,4], elist$genes[,5],
-      elist$genes[,6], mrmr.scores, mean1, mean2, (mean1 / mean2), elist$E)
+    output.matrix <- cbind(idx.tmp, elist$genes$Description, elist$genes$Name,
+      elist$genes$ID, mrmr.scores, mean1, mean2, (mean1 / mean2), elist$E)
 
     output.matrix <- data.frame(output.matrix)
     colnames(output.matrix) <- c("BRC", "Description", "Name", "ID", "Score",
@@ -1120,7 +1120,7 @@ mrmrFS <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
     trainsample2 <- trainsample2[mrmr.idx,]
     testsample <- testsample[mrmr.idx,]
     genes <- elist$genes[mrmr.idx,]
-    idx <- paste(genes[,1], " ", genes[,3], " ", genes[,2], sep="")
+    idx <- paste(genes$Block,genes$Row,genes$Column)
     
     trainsample <- cbind(mrmr.scores, trainsample)
     colnames(trainsample) <- c("mrmr score",traincols)
@@ -1168,7 +1168,7 @@ mMsFS <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
     trainsample1 <- elist$E[,traincols1]
     trainsample2 <- elist$E[,traincols2]
 
-    idx <- paste(elist$genes[,1], elist$genes[,3], elist$genes[,2], sep=" ")
+    idx <- paste(elist$genes$Block,elist$genes$Row,elist$genes$Column)
     p <- vector(mode="numeric", length=row.number)
     x <- c(1:traincols2.length)
     y <- c(1:traincols1.length)
@@ -1295,12 +1295,12 @@ mMs <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
         if(min(min.p1,min.p2) < discard.threshold && (fold > fold.thresh ||
           fold < 1/fold.thresh)) {
             
-            idx.tmp <- paste(elist$genes[zeile,1], " ", elist$genes[zeile,3],
-              " ", elist$genes[zeile,2], sep="")
+            idx.tmp <- paste(elist$genes$Block[zeile],elist$genes$Row[zeile],
+              elist$genes$Column[zeile])
             count <- count+1
             
-            output.matrix[count,] <- c(idx.tmp, elist$genes[zeile,4],
-              elist$genes[zeile,5], elist$genes[zeile,6], min.order1,
+            output.matrix[count,] <- c(idx.tmp, elist$genes$Description[zeile],
+              elist$genes$Name[zeile], elist$genes$ID[zeile], min.order1,
               min.count1, min.cutoff1, min.order2, min.count2, min.cutoff2,
               min(min.p1,min.p2),
               if(min.p2 < min.p1) label2 else if (min.p2 > min.p1) label1
@@ -1379,7 +1379,7 @@ mMsFS2 <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
       joinMCountResults(p1=mCount.results1$mMs, p2=mCount.results2$mMs,
       m1=mCount.results2$means2, m2=mCount.results1$means2, l1=label1,
       l2=label2)
-    idx <- paste(elist$genes[,1], elist$genes[,3], elist$genes[,2], sep=" ")
+    idx <- paste(elist$genes$Block,elist$genes$Row,elist$genes$Column)
     
     trainsample <- cbind(joined.mCount.results$p, trainsample)
     colnames(trainsample) <- c("M Statistic", traincols)
@@ -1477,14 +1477,14 @@ mMs2 <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
         if(p < discard.threshold && (fold > fold.thresh ||
           fold < 1/fold.thresh)) {
             
-            idx.tmp <- paste(elist$genes[zeile,1], " ", elist$genes[zeile,3],
-              " ", elist$genes[zeile,2], sep="")
+            idx.tmp <- paste(elist$genes$Block[zeile],elist$genes$Row[zeile],
+              elist$genes$Column[zeile])
             count <- count+1
-            output.matrix[count,] <- c(idx.tmp, elist$genes[zeile,4],
-              elist$genes[zeile,5], elist$genes[zeile,6], m.order1, m.count1,
-              m.cutoff1, m.order2, m.count2, m.cutoff2, round(p,9), label,
-              mean1, mean2, fold, prosp.count1, prosp.count2, prosp.cutoff,
-              elist$E[zeile,])
+            output.matrix[count,] <- c(idx.tmp, elist$genes$Description[zeile],
+              elist$genes$Name[zeile], elist$genes$ID[zeile], m.order1,
+              m.count1,m.cutoff1, m.order2, m.count2, m.cutoff2, round(p,9),
+              label, mean1, mean2, fold, prosp.count1, prosp.count2,
+              prosp.cutoff, elist$E[zeile,])
               
         }else if(discard.features) {
             discard <- c(discard,zeile)
@@ -1532,24 +1532,38 @@ loadGPR <- function(gpr.path=NULL, targets.path=NULL, array.type="ProtoArray",
   protoarray.aggregation="min", array.columns=list(E="F635 Median",
   Eb="B635 Median"),
   array.annotation=c("Block", "Column", "Row", "Description", "Name", "ID")){
-    
+
     if(is.null(gpr.path) || is.null(targets.path)) {
         stop("ERROR: Not all mandatory arguments have been defined!")
     }
     targets <- readTargets(targets.path)
-    elist <- read.maimages(files=targets, path=gpr.path,
+    elist.tmp <- read.maimages(files=targets, path=gpr.path,
       source="genepix.median", columns=array.columns,
       annotation=array.annotation)
-    
+     
+    # For ProtoArrays: construct missing column 'Description' from the column
+    # 'Name'  
+    if(is.null(elist.tmp$genes$Description) && array.type=="ProtoArray"){
+        elist.tmp$genes <- cbind(elist.tmp$genes,
+          rep("NA",nrow(elist.tmp$genes)), stringsAsFactors=FALSE)
+        colnames(elist.tmp$genes)[ncol(elist.tmp$genes)] <- "Description"
+        features <- grep("^Hs~", elist.tmp$genes$Name)
+        controls <-
+          grep("(^HumanIg|^Anti-HumanIg|^V5control|Anti-human-Ig|V5Control)",
+          elist.tmp$genes$Name)
+        elist.tmp$genes$Description[features] <- "Feature"
+        elist.tmp$genes$Description[controls] <- "Control" 
+    } 
+
     # If no match, grep will return 'integer(0)' resulting in an empty elist$E
     # in the following lines. Hence the following if-statements are necessary:
-    if(any(grep("Empty", elist$genes$Description))){  
-      elist <- elist[-grep("Empty", elist$genes$Description),]
+    if(any(grep("(Empty|NA)", elist.tmp$genes$Description))){
+      elist.tmp <- elist.tmp[-grep("(Empty|NA)", elist.tmp$genes$Description),]
     }
-    if(any(grep("Control", elist$genes$Description))){
-      elist <- elist[-grep("Control", elist$genes$Description),]
+    if(any(grep("Control", elist.tmp$genes$Description))){
+      elist <- elist.tmp[-grep("Control", elist.tmp$genes$Description),]
     }
-    
+
     colnames(elist$E) <- targets$ArrayID
     colnames(elist$Eb) <- colnames(elist$E)
 
@@ -1565,30 +1579,24 @@ loadGPR <- function(gpr.path=NULL, targets.path=NULL, array.type="ProtoArray",
           (elist$E[row(elist$E)[,1]%%2==1,]+elist$E[row(elist$E)[,1]%%2==0,])/2
         elist <- elist[-row(elist)[,1]%%2==1,]
     }
+    
+    # Adding controls data to the EListRaw object for ProtoArrays in order to
+    # use it for rlm normalization.
+    if(array.type == "ProtoArray"){
+        elist.tmp <-
+          elist.tmp[grep("Control", elist.tmp$genes$Description),]
+        elist.tmp$genes$Name <-
+          gsub('^([0-9A-Za-z_-]*)~(.*)', '\\1', elist.tmp$genes$Name)
+        elist$C <- elist.tmp$E
+        elist$Cb <- elist.tmp$Eb
+        elist$cgenes <- elist.tmp$genes
+        colnames(elist$C) <- colnames(elist$E)
+        colnames(elist$Cb) <- colnames(elist$E)
+    }
+    
     return(elist)
 }
 #+++++++++++++++++++++++++++ loadGPR +++++++++++++++++++++++++++++++++++++++
-
-#+++++++++++++++++++++++++++ loadGPR.Controls ++++++++++++++++++++++++++++++++++
-loadGPR.Controls <- function(gpr.path=NULL, targets.path=NULL,
-  array.type="ProtoArray", array.columns=list(E="F635 Median",Eb="B635 Median"),
-  array.annotation=c("Block", "Column", "Row", "Description", "Name", "ID")){
-    
-    if(is.null(gpr.path) || is.null(targets.path)) {
-        stop("ERROR: Not all mandatory arguments have been defined!")
-    }
-    
-    targets <- readTargets(targets.path)
-    elist <- read.maimages(files=targets, path=gpr.path,
-      source="genepix.median", columns=array.columns,
-      annotation=array.annotation)
-    elist <- elist[-grep("Empty", elist$genes$Description),]
-    colnames(elist$E) <- targets$ArrayID
-    colnames(elist$Eb) <- colnames(elist$E)
-
-    return(elist)
-}
-#+++++++++++++++++++++++++++ loadGPR.Controls ++++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++++++++++++ backgroundCorrect +++++++++++++++++++++++++++++++++
 #-->limma: backgroundCorrect(RG, method="auto", offset=0, printer=RG$printer,
@@ -1634,9 +1642,9 @@ batchFilter <- function(elist=NULL, lot1=NULL, lot2=NULL, p.thresh=0.05,
         if(!is.numeric(p)){p <- 1}
         
         fold <- mean(elist$E[zeile, lot1])/mean(elist$E[zeile, lot2])
-        output[zeile,] <- c(paste(elist$genes[zeile,1], " ",
-          elist$genes[zeile,3], " ", elist$genes[zeile,2], sep=""), p, fold,
-          elist$genes[zeile,4])
+        output[zeile,] <- c(paste(elist$genes$Block[zeile],
+          elist$genes$Row[zeile], elist$genes$Column[zeile]), p, fold,
+          elist$genes$Description[zeile])
         if(p < p.thresh && (fold > fold.thresh || fold < 1/fold.thresh)) {
             #---> ISSUE: there  may be no exact representation for floats!!!
             discard <- c(discard,zeile)
@@ -1725,122 +1733,177 @@ minMaxNorm <- function(x=NULL, min.old=NULL, max.old=NULL, min.new=NULL,
 #++++++++++++++++++++++++++ minMaxNorm() +++++++++++++++++++++++++++++++++++++++
 
 #++++++++++++++++++++++++ normalizeRLM() +++++++++++++++++++++++++++++++++++++++
-normalizeRLM <- function(elist=NULL, controls.elist=NULL, gpr.path=NULL,
-  targets.path=NULL, contr.names=NULL, output.path=NULL){    
-    #normalizeRLM(elist=elist, controls.elist=NULL,
-    #  gpr.path="C:/Users/MichaelT/Desktop/DataAD",
-    #  targets.path=paste(cwd, "/extdata/targets_AD&NDC.txt", sep=""),
-    #  contr.names=NULL, output.path=paste(cwd,"/demo/demo_output",sep=""))
-    if(is.null(controls.elist)){
-        controls.elist <-
-          loadGPR.Controls(gpr.path=gpr.path, targets.path=targets.path)
-        controls.elist <-
-          controls.elist[grep("Control", controls.elist$genes$Description),]
-        controls.elist <-
-          controls.elist[grep("HumanIg", controls.elist$genes$Name),]
-        #cwd <- system.file(package="PAA")
-        #save(controls.elist,
-        #  file=paste(cwd, "/extdata/AlzheimerControls.RData", sep=""))
+normalizeRLM <- function(elist=NULL, controls="internal", output.path=NULL){
+    
+    controls.elist <- list(E = elist$C, genes = elist$cgenes)  
+        
+    if(controls == "internal"){
+        controls.elist$E <-
+          controls.elist$E[grep("(^HumanIg|^Anti-HumanIg)",
+          controls.elist$genes$Name),]
+        controls.elist$genes <-
+          controls.elist$genes[grep("(^HumanIg|^Anti-HumanIg)",
+          controls.elist$genes$Name),]
+          
+    }else if(controls == "external"){
+        controls.elist$E <-
+          controls.elist$E[grep("^V5control", controls.elist$genes$Name),]
+        controls.elist$genes <-
+          controls.elist$genes[grep("^V5control", controls.elist$genes$Name),]
+    }else if(controls == "both"){
+        controls.elist$E <-
+          controls.elist$E[grep("(^HumanIg|^Anti-HumanIg|^V5control)", 
+          controls.elist$genes$Name),]
+        controls.elist$genes <-
+          controls.elist$genes[grep("(^HumanIg|^Anti-HumanIg|^V5control)", 
+          controls.elist$genes$Name),]
+    }else{
+        controls.elist$E <-
+          try(controls.elist$E[grep(controls, controls.elist$genes$Name),],
+          TRUE)
+        controls.elist$genes <-
+          try(controls.elist$genes[grep(controls, controls.elist$genes$Name),],
+          TRUE)
+        if(nrow(controls.elist$E) == 0){
+            stop("Error! Please check your regular expression!\n")
+        }
     }
+    
     controls.elist$E <- log2(controls.elist$E)
-    if(is.null(contr.names)){
-        contr.names <- c("HumanIgG1", "HumanIgG2", "HumanIgG3", "HumanIgG4",
-          "HumanIgA1", "HumanIgA2", "Anti-HumanIgG1", "Anti-HumanIgG2",
-          "Anti-HumanIgG3", "Anti-HumanIgG4", "Anti-HumanIgA1",
-          "Anti-HumanIgA2")
-    }
+    rownames(controls.elist$E) <- controls.elist$genes$Name
+
+    contr.names <- unique(rownames(controls.elist$E))
     contr.names.len <- length(contr.names)
-    n.arrays <- 40
-    n.block.contr <- 48
-    x <- c(controls.elist$E)
+    contr.mapping <- matrix(nrow=contr.names.len, ncol=1)
+    rownames(contr.mapping) <- contr.names
+    contr.mapping[,1] <- 1:contr.names.len
+    
+    p.features <- nrow(elist$E)
+    p.controls <- nrow(controls.elist$E)
+    n.arrays <- ncol(elist$E)
+    n.blocks <- max(controls.elist$genes$Block)
+    
+    y <- c(controls.elist$E)
     dummies <-
-      matrix(0, ncol={n.arrays+n.block.contr+contr.names.len}, nrow=length(x))
+      matrix(0, ncol={n.arrays+n.blocks+contr.names.len-3}, nrow=length(y))
+    rnames <- vector(length=length(y))
+    a.cols <- paste("a",1:{n.arrays-1},sep="")
+    b.cols <- paste("b",1:{n.blocks-1},sep="")
+    t.cols <- paste("t",1:{contr.names.len-1},sep="")
+    colnames(dummies) <- c(a.cols,b.cols,t.cols)
     
-    
-    
-    current.row <- 1
+    a.params <- matrix(nrow=n.arrays, ncol=2)
+    rownames(a.params) <- colnames(controls.elist)
+    b.params <- matrix(nrow=n.blocks, ncol=2)
+
+
+    idx <- 1
     for(i in 1:n.arrays){
-        for(j in 1:n.block.contr){
-            for(k in 1:contr.names.len){
-                dummies[current.row, i] <- 1
-                dummies[current.row, {n.arrays+j}] <- 1
-                dummies[current.row, {n.arrays+n.block.contr+k}] <- 1
-                current.row <- current.row + 1
+        a.tmp <- paste("a",i,sep="")
+        a.params[i,1] <- a.tmp
+        for(j in 1:p.controls){
+            rnames[idx] <- rownames(controls.elist$E)[j]
+            b.idx <- controls.elist$genes$Block[j]
+            b.tmp <- paste("b",b.idx,sep="")
+            b.params[b.idx,1] <- b.tmp
+            t.idx <- contr.mapping[rownames(controls.elist$E)[j], 1]
+            t.tmp <- paste("t",t.idx,sep="")
+            if(i == n.arrays){
+                dummies[idx,a.cols] <- -1
+            }else{
+                dummies[idx,a.tmp] <- 1
             }
+            
+            if(b.idx == n.blocks){
+                dummies[idx,b.cols] <- -1
+            }else{
+                dummies[idx,b.tmp] <- 1
+            }
+            
+            if(t.idx == contr.names.len){
+                dummies[idx,t.cols] <- -1
+            }else{
+                dummies[idx,t.tmp] <- 1
+            }
+            
+            idx <- idx+1
         }
     }
-    dummies <- rbind(dummies, c(rep(-1, 40), rep(0,48), rep(0,12)),
-      c(rep(0, 40), rep(-1,48), rep(0,12)), c(rep(0, 40), rep(0,48),
-      rep(-1,12)))
-    dummies <- cbind(rep(1, {length(x)+3}), dummies)
+    dummies <- cbind(y,dummies)
+    rownames(dummies) <- rnames
+
+
+
+    e <- rnorm(length(y),0,1)
+    rlm.result <- rlm(y~.+e, data=data.frame(dummies))
+
+
     
+    a.params[-n.arrays,2] <- rlm.result$coefficients[a.params[-n.arrays,1]]
+    a.params.sum <- sum(as.numeric(a.params[-n.arrays,2]))
+    a.params[n.arrays,2] <- -a.params.sum
     
-    
-    rlm.result <- rlm(y=c(x,0,0,0), x=dummies, method="M", psi=psi.bisquare)
-    #lm(x~dummies)
-    
-    
-    
-    normalized <- matrix(nrow=nrow(elist$E), ncol=ncol(elist$E))
-    colnames(normalized) <- colnames(elist$E)
-    for(i in 1:nrow(elist$E)){
-        for(j in 1:ncol(elist$E)){
-            normalized[i,j] <- log2(elist$E[i,j]) -
-              rlm.result$coefficients[j+1] -
-              rlm.result$coefficients[ncol(elist$E)+elist$genes$Block[i]+1]
-        }
-    }
+    b.params[-n.blocks,2] <- rlm.result$coefficients[b.params[-n.blocks,1]]
+    b.params.sum <- sum(as.numeric(b.params[-n.blocks,2]))
+    b.params[n.blocks,2] <- -b.params.sum
+
+
+
+    a <- t(matrix(rep(as.numeric(a.params[,2]),p.features), ncol=p.features))
+    b <- matrix(mapply(function(i){
+      as.numeric(b.params[elist$genes$Block[i],2])},
+      rep(1:p.features, n.arrays)),
+      ncol=n.arrays)
+    normalized <- matrix(mapply(function(x,y,z){x-y-z}, log2(elist$E), a, b),
+      ncol=n.arrays)
+    colnames(normalized) <- colnames(elist$E) 
     result <- elist
     result$E <- normalized
-    
-    
-    contr.normalized <- matrix(nrow=nrow(controls.elist$E),
-      ncol=ncol(controls.elist$E))
-    for(i in 1:nrow(controls.elist$E)){
-        for(j in 1:ncol(controls.elist$E)){
-            contr.normalized[i,j] <- controls.elist$E[i,j] -
-              rlm.result$coefficients[j+1] -
-              rlm.result$coefficients[ncol(controls.elist$E)+
-              controls.elist$genes$Block[i]+1]
-        }
-    }
+
+    a <- t(matrix(rep(as.numeric(a.params[,2]),p.controls), ncol=p.controls))
+    b <- matrix(mapply(function(i){
+      as.numeric(b.params[controls.elist$genes$Block[i],2])},
+      rep(1:p.controls, n.arrays)),
+      ncol=n.arrays)
+    contr.normalized <- matrix(mapply(function(x,y,z){x-y-z},
+      controls.elist$E, a, b),
+      ncol=n.arrays)
+    colnames(contr.normalized) <- colnames(elist$E)
 
 
 
     if(!is.null(output.path)){
         dir.create(paste(output.path, "/rlm", sep=""))
-        tiff(paste(output.path,"/rlm/rlm_fitted_values.tiff",sep=""),
-          width=4000, height=2000, pointsize=10, compression="lzw", res=300)
-            boxplot(matrix(rlm.result$fitted.values[1:23040], nrow=12*48,
-              ncol=40), col="gray", cex=0.6, cex.axis=0.6, las=3)
-        dev.off()
+
         tiff(paste(output.path,"/rlm/rlm_raw.tiff",sep=""), width=4000,
           height=2000, pointsize=10, compression="lzw", res=300)
             boxplot(log(elist$E), col="gray", cex=0.6, cex.axis=0.6, las=3)
         dev.off()
+        
         tiff(paste(output.path,"/rlm/rlm_normalized.tiff",sep=""), width=4000,
           height=2000, pointsize=10, compression="lzw", res=300)
             boxplot(normalized, col="gray", cex=0.6, cex.axis=0.6, las=3)
         dev.off()
-        
+
         tiff(paste(output.path,"/rlm/rlm_controls.tiff",sep=""), width=4000,
           height=2000, pointsize=10, compression="lzw", res=300)
             boxplot(controls.elist$E, col="gray", cex=0.6, cex.axis=0.6, las=3)
         dev.off()
+        
         tiff(paste(output.path,"/rlm/rlm_controls_normalized.tiff",sep=""),
           width=4000, height=2000, pointsize=10, compression="lzw", res=300)
             boxplot(contr.normalized, col="gray", cex=0.6, cex.axis=0.6, las=3)
         dev.off()
     }
-    
+
     return(result)
 }
 #+++++++++++++++++++++++++++ normalizeRLM() ++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++++++++++++ normalizeArrays +++++++++++++++++++++++++++++++++++
 normalizeArrays <- function(elist=NULL, method="quantile",
-  cyclicloess.method="pairs", group1=NULL, group2=NULL, controls.elist=NULL,
-  gpr.path=NULL, targets.path=NULL, contr.names=NULL, output.path=NULL){
+  cyclicloess.method="pairs", controls="internal", group1=NULL, group2=NULL,
+  output.path=NULL){
     
     if(is.null(elist)) {
         stop("ERROR: Not all mandatory arguments have been defined!")
@@ -1863,13 +1926,9 @@ normalizeArrays <- function(elist=NULL, method="quantile",
             tmp2 <- normalizeVSN(elist[,group2])
             elist.normalized <- cbind(tmp1, tmp2)
         }else if(method=="rlm"){
-            tmp1 <- normalizeRLM(elist=elist[,group1],
-              controls.elist=controls.elist, gpr.path=gpr.path,
-              targets.path=targets.path, contr.names=NULL,
+            tmp1 <- normalizeRLM(elist=elist[,group1],controls=controls,
               output.path=output.path)
-            tmp2 <- normalizeRLM(elist=elist[,group1],
-              controls.elist=controls.elist, gpr.path=gpr.path,
-              targets.path=targets.path, contr.names=NULL,
+            tmp2 <- normalizeRLM(elist=elist[,group2],controls=controls,
               output.path=output.path)
             elist.normalized <- cbind(tmp1, tmp2)
         }
@@ -1885,8 +1944,7 @@ normalizeArrays <- function(elist=NULL, method="quantile",
             elist.normalized <- normalizeVSN(elist)
         }else if(method=="rlm"){
             elist.normalized <-
-              normalizeRLM(elist=elist, controls.elist=controls.elist,
-              gpr.path=gpr.path, targets.path=targets.path, contr.names=NULL,
+              normalizeRLM(elist=elist,controls=controls,
               output.path=output.path)
         }
     }
@@ -1895,8 +1953,8 @@ normalizeArrays <- function(elist=NULL, method="quantile",
 #+++++++++++++++++++++++ normalizeArrays +++++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++++++++ plotNormMethods +++++++++++++++++++++++++++++++++++++++
-plotNormMethods <- function(elist=NULL, include.rlm=FALSE, controls.elist=NULL,
-  gpr.path=NULL, targets.path=NULL, contr.names=NULL, output.path=NULL){
+plotNormMethods <- function(elist=NULL, include.rlm=FALSE, controls="internal",
+  output.path=NULL){
     
     if(is.null(elist)) {
         stop("ERROR: 'elist' has not been defined!")
@@ -1912,9 +1970,8 @@ plotNormMethods <- function(elist=NULL, include.rlm=FALSE, controls.elist=NULL,
     elist.vsn <- normalizeArrays(elist=elist, method="vsn")
     if(include.rlm){
         elist.rlm <-
-          normalizeArrays(elist=elist, method="rlm",
-          controls.elist=controls.elist, gpr.path=gpr.path,
-          targets.path=targets.path, contr.names=contr.names, output.path=NULL)
+          normalizeArrays(elist=elist, method="rlm", controls=controls,
+          output.path=NULL)
     }
 
     if(is.null(output.path)){
@@ -2241,7 +2298,7 @@ selectFeatures.frequency <- function(elist=NULL, n1=NULL, n2=NULL, label1="A",
     }
     tmp.brc <- matrix(nrow=nrow(elist),ncol=2)
     tmp.brc[,1] <- 
-      paste(elist$genes[,1]," ",elist$genes[,3]," ",elist$genes[,2],sep="")
+      paste(elist$genes$Block,elist$genes$Row,elist$genes$Column)
     tmp.brc[,2] <- 1:nrow(elist)
     selected.features <- c()
     avg.accuracy <- 0
@@ -2276,11 +2333,11 @@ selectFeatures.frequency <- function(elist=NULL, n1=NULL, n2=NULL, label1="A",
         indexes <-
           as.numeric(tmp.brc[tmp.brc[,1] %in% selectFeatures.results[[i]]$BRC,,
           drop=FALSE][,2])
-        traindata <- data.frame(paste(elist$genes[indexes,1],
-          elist$genes[indexes,3],elist$genes[indexes,2]),
+        traindata <- data.frame(paste(elist$genes$Block[indexes],
+          elist$genes$Row[indexes],elist$genes$Column[indexes]),
           rbind(elist$E[indexes,crossValTrain[i,]]))
-        testdata <- data.frame(paste(elist$genes[indexes,1],
-          elist$genes[indexes,3],elist$genes[indexes,2]),
+        testdata <- data.frame(paste(elist$genes$Block[indexes],
+          elist$genes$Row[indexes],elist$genes$Column[indexes]),
           rbind(elist$E[indexes,crossValTest[i,]]))
         names(testdata)[1] <- names(traindata)[1] <- "BRC"
         
@@ -2395,7 +2452,7 @@ bootstrap.data <- function(columns=NULL, n1=NULL, n2=NULL, bootstraps=100) {
     }
     return(list(train.columns=train.columns, test.columns=test.columns))
 }
-#+++++++++++++++++++++++++++ bootstrap.data +++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++ bootstrap.data ++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++++++++++ svm.rfe.ensemble ++++++++++++++++++++++++++++++++++++
 svm.rfe.ensemble <- function(x=NULL, label1="A", label2="B", n1=NULL, n2=NULL){
@@ -2543,8 +2600,7 @@ selectFeatures.ensemble <- function(elist=NULL, n1=NULL, n2=NULL, label1="A",
         stop("ERROR: Not all mandatory arguments have been defined!")
     }
     x <- elist$E
-    rownames(x) <- paste(elist$genes[,1], elist$genes[,3], elist$genes[,2],
-      sep=" ") 
+    rownames(x) <- paste(elist$genes$Block,elist$genes$Row,elist$genes$Column) 
     subsample.results <- subsample.data(columns=colnames(x), n1=n1, n2=n2, k=k,
       subsamples=subsamples)
     train.columns <- subsample.results$train.columns
@@ -2703,8 +2759,8 @@ plotFeatures <- function(features=NULL, elist=NULL, n1=NULL, n2=NULL,
     if(is.null(features) || is.null(elist) || is.null(n1) || is.null(n2)) {
         stop("ERROR: Not all mandatory arguments have been defined!")
     }
-    datamatrix <- cbind(paste(elist$genes[,1],elist$genes[,3],elist$genes[,2]),
-      elist$E)
+    datamatrix <- cbind(paste(elist$genes$Block,elist$genes$Row,
+      elist$genes$Column),elist$E)
     datamatrix <- datamatrix[datamatrix[,1] %in% features,]
     len <- length(datamatrix[,1])
     if(!is.null(output.path)){
@@ -2765,12 +2821,12 @@ plotFeaturesHeatmap <- function(features=NULL, elist=NULL, n1=NULL, n2=NULL,
     }
     features <- c(na.exclude(features))
     datamatrix <- elist$E
-    brc <- paste(elist$genes[,1], elist$genes[,3], elist$genes[,2], sep=" ")
+    brc <- paste(elist$genes$Block,elist$genes$Row,elist$genes$Column)
     #datamatrix <- datamatrix[rownames(datamatrix) %in% features,]
     rows <- brc %in% features
     datamatrix <- datamatrix[rows,]
     if(description){
-        rownames(datamatrix) <- elist$genes[rows,"Description"]
+        rownames(datamatrix) <- elist$genes$Description[rows]
         mar2 <- 15
         cxRow=0.5
     }else{
@@ -2805,8 +2861,8 @@ printFeatures <- function(features=NULL, elist=NULL, output.path=NULL){
     if(is.null(features) || is.null(elist)) {
         stop("ERROR: Not all mandatory arguments have been defined!")
     }
-    datamatrix <- cbind(paste(elist$genes[,1],elist$genes[,3],elist$genes[,2]),
-      elist$genes[,4],elist$E)
+    datamatrix <- cbind(paste(elist$genes$Block,elist$genes$Row,
+      elist$genes$Column), elist$genes$Description,elist$E)
     datamatrix <- datamatrix[datamatrix[,1] %in% features,]
     colnames(datamatrix) <- c("BRC","Description", colnames(elist$E))
     if(is.null(output.path)){
@@ -2821,8 +2877,7 @@ printFeatures <- function(features=NULL, elist=NULL, output.path=NULL){
 
 #+++++++++++++++++++++++++++ plotMAPlots +++++++++++++++++++++++++++++++++++++++
 plotMAPlots <- function(elist=NULL, idx="all", include.rlm=FALSE,
-  controls.elist=NULL, gpr.path=NULL, targets.path=NULL, contr.names=NULL,
-  output.path=NULL){
+  controls="internal", output.path=NULL){
     
     if(is.null(elist) || is.null(idx)) {
         stop("ERROR: Not all mandatory arguments have been defined!")
@@ -2856,9 +2911,7 @@ plotMAPlots <- function(elist=NULL, idx="all", include.rlm=FALSE,
     elist.vsn <- normalizeArrays(elist=elist, method="vsn")
     if(include.rlm){
         elist.rlm <- normalizeArrays(elist=elist, method="rlm",
-          controls.elist=controls.elist, gpr.path=gpr.path,
-          targets.path=targets.path, contr.names=contr.names,
-          output.path=NULL)
+          controls=controls, output.path=NULL)
     }
     
     if(idx == "all"){
@@ -3197,7 +3250,7 @@ pvaluePlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
         }
     }
 }
-#+++++++++++++++++++++++++++ pvaluePlot +++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++ pvaluePlot ++++++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++++++++++++ volcanoPlot +++++++++++++++++++++++++++++++++++++++
 volcanoPlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
@@ -3252,9 +3305,9 @@ volcanoPlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
                 mark <- c(mark,zeile)
             }
         }
-        output[zeile,] <- c(paste(elist$genes[zeile,1], " ",
-          elist$genes[zeile,3], " ", elist$genes[zeile,2], sep=""), p, fold,
-          elist$genes[zeile,4], log2(elist$E[zeile,]))
+        output[zeile,] <- c(paste(elist$genes$Block[zeile],
+          elist$genes$Row[zeile], elist$genes$Column[zeile]), p, fold,
+          elist$genes$Description[zeile], log2(elist$E[zeile,]))
     }
     #write.table(x=output, file=paste(output.path, "/volcano.txt", sep=""),
     #  sep="\t", eol="\n", row.names=FALSE, quote=FALSE)

@@ -2,6 +2,7 @@
 			*DATA INFO - BEGIN*
 			*******************
 
+1. Alzheimer.RData
 This exemplary "20 Alzheimer's disease serum samples vs. 20 controls" data set is a subset of a publicly available ProtoArray data set.
 It can be downloaded from the repository "Gene Expression Omnibus" (http://www.ncbi.nlm.nih.gov/geo/).
 Search for the GEO record "GSE29676". It has been contributed by Nagele E et al..
@@ -11,8 +12,19 @@ Nagele E, Han M, Demarshall C, Belinka B, Nagele R (2011):
 Diagnosis of Alzheimer's disease based on disease-specific autoantibody profiles in human sera.
 PLoS One 6: e23112.
 
+
+
+2. Dummy data
 Based on this data set a very small raw (i.e., gpr files) dummy data set (file names tagged with "dummy_") has been created
 by massive data reduction in order to enable the demostration of the function loadGPR() in PAA's man pages and its vignette.
+Additionally, this dummy data has been saved in the file "DummyData.RData".
+
+
+
+3. Results
+In the files "selectFeaturesResultsEns.RData" and "selectFeaturesResultsFreq.RData" exemplary feature selection results for the Alzheimer's
+disease data (see section 1) are stored.
+
 			*****************
 			*DATA INFO - END*
 			*****************
