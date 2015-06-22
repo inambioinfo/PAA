@@ -1,7 +1,26 @@
 RELEASE HISTORY OF THE "PAA" PACKAGE
 ===========================================
 
-CHANGES IN PAA VERSION 1.2.1 [2015-06-17]:
+CHANGES IN PAA VERSION 1.3.2 [2015-06-22]:
+-----------------------------------------------
+GENERAL
+* Update to the latest R version which has been released a few days ago (2015-06-18).
+* Built with R-3.2.1 
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* NEWS file of version 1.3.1 corrected (wrong version number for the last update in the
+  NEWS file).
+
+BUG FIXES
+* No changes.
+
+CHANGES IN PAA VERSION 1.3.1 [2015-06-17]:
 -----------------------------------------------
 GENERAL
 * The optional rlm normalization (for ProtoArrays) used by the functions normalizeArrays(),

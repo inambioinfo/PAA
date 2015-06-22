@@ -1,4 +1,4 @@
-### R code from vignette source 'C:/R/R-3.2.0/library/PAA_DONT_DELETE/vignettes/PAA_vignette.Rnw'
+### R code from vignette source 'C:/R/R-3.2.1/library/PAA_DONT_DELETE/vignettes/PAA_vignette.Rnw'
 
 ###################################################
 ### code chunk number 1: style
