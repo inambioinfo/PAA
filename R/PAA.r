@@ -1557,11 +1557,11 @@ loadGPR <- function(gpr.path=NULL, targets.path=NULL, array.type="ProtoArray",
 
     # If no match, grep will return 'integer(0)' resulting in an empty elist$E
     # in the following lines. Hence the following if-statements are necessary:
-    if(any(grep("(Empty|NA)", elist.tmp$genes$Description))){
-      elist.tmp <- elist.tmp[-grep("(Empty|NA)", elist.tmp$genes$Description),]
+    if(any(grep("(^Empty$|^NA$)", elist.tmp$genes$Description))){
+      elist.tmp <- elist.tmp[-grep("(^Empty$|^NA$)", elist.tmp$genes$Description),]
     }
-    if(any(grep("Control", elist.tmp$genes$Description))){
-      elist <- elist.tmp[-grep("Control", elist.tmp$genes$Description),]
+    if(any(grep("^Control$", elist.tmp$genes$Description))){
+      elist <- elist.tmp[-grep("^Control$", elist.tmp$genes$Description),]
     }
 
     colnames(elist$E) <- targets$ArrayID
@@ -1584,7 +1584,7 @@ loadGPR <- function(gpr.path=NULL, targets.path=NULL, array.type="ProtoArray",
     # use it for rlm normalization.
     if(array.type == "ProtoArray"){
         elist.tmp <-
-          elist.tmp[grep("Control", elist.tmp$genes$Description),]
+          elist.tmp[grep("^Control$", elist.tmp$genes$Description),]
         elist.tmp$genes$Name <-
           gsub('^([0-9A-Za-z_-]*)~(.*)', '\\1', elist.tmp$genes$Name)
         elist$C <- elist.tmp$E
