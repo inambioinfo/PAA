@@ -1543,11 +1543,11 @@ loadGPR <- function(gpr.path=NULL, targets.path=NULL, array.type="ProtoArray",
     
     # If no match, grep will return 'integer(0)' resulting in an empty elist$E
     # in the following lines. Hence the following if-statements are necessary:
-    if(any(grep("Empty", elist$genes$Description))){  
-      elist <- elist[-grep("Empty", elist$genes$Description),]
+    if(any(grep("(^Empty$|^NA$)", elist.tmp$genes$Description))){
+      elist.tmp <- elist.tmp[-grep("(^Empty$|^NA$)", elist.tmp$genes$Description),]
     }
-    if(any(grep("Control", elist$genes$Description))){
-      elist <- elist[-grep("Control", elist$genes$Description),]
+    if(any(grep("^Control$", elist.tmp$genes$Description))){
+      elist <- elist.tmp[-grep("^Control$", elist.tmp$genes$Description),]
     }
     
     colnames(elist$E) <- targets$ArrayID
@@ -1574,8 +1574,18 @@ loadGPR.Controls <- function(gpr.path=NULL, targets.path=NULL,
   array.type="ProtoArray", array.columns=list(E="F635 Median",Eb="B635 Median"),
   array.annotation=c("Block", "Column", "Row", "Description", "Name", "ID")){
     
-    if(is.null(gpr.path) || is.null(targets.path)) {
-        stop("ERROR: Not all mandatory arguments have been defined!")
+    # Adding controls data to the EListRaw object for ProtoArrays in order to
+    # use it for rlm normalization.
+    if(array.type == "ProtoArray"){
+        elist.tmp <-
+          elist.tmp[grep("^Control$", elist.tmp$genes$Description),]
+        elist.tmp$genes$Name <-
+          gsub('^([0-9A-Za-z_-]*)~(.*)', '\\1', elist.tmp$genes$Name)
+        elist$C <- elist.tmp$E
+        elist$Cb <- elist.tmp$Eb
+        elist$cgenes <- elist.tmp$genes
+        colnames(elist$C) <- colnames(elist$E)
+        colnames(elist$Cb) <- colnames(elist$E)
     }
     
     targets <- readTargets(targets.path)
