@@ -11,7 +11,7 @@ A function to read raw data from gpr files.
 
 \description{
 Reads an EListRaw from a set of gpr files containing ProtoArray data or other
-one-color data.
+one-color microarray data.
 }
 
 
@@ -54,19 +54,28 @@ data. Paths to a target file and to a folder containing gpr files (all gpr files
 in that folder that are listed in the targets file will be read) are mandatory.
 The folder \code{"R_HOME/library/PAA/extdata"} contains an exemplary target file
 that can be used as a template. If \code{array.type} is set to
-\code{"ProtoArray"} (default), duplicate spots will be aggregated. 
-The corresponding method (\code{"min"} or \code{"mean"}) can be specified via
-\code{protoarray.aggregation}. Arguments \code{array.columns} and
+\code{"ProtoArray"} (default), duplicate spots will be aggregated. The
+corresponding method (\code{"min"} or \code{"mean"}) can be specified via
+\code{protoarray.aggregation}. As another ProtoArray-specific feature, control
+spot data and information will be stored in additional components of the
+returned object (see below). Arguments \code{array.columns} and
 \code{array.annotation} define the columns where \code{read.maimages()} will
 find foreground and background intensity values as well as other important
-columns.          
+columns. For \code{array.annotation} the default columns \code{"Block"},
+\code{"Column"}, \code{"Row"}, \code{"Description"}, \code{"Name"} and
+\code{"ID"} are mandatory (exception: the \code{"Description"} column for
+ProtoArrays since a very general column can be constructed from the column
+\code{"Name"}).         
 }
 
 
 
 \value{
-An object of class \code{EListRaw} (see the documentation of \code{limma} for
-details) is returned.
+An extended object of class \code{EListRaw} (see the documentation of
+\code{limma} for details) is returned. If \code{array.type} is set to
+\code{"ProtoArray"} (default), the object provides additional components for
+control spot data: \code{C}, \code{Cb} and \code{cgenes} which are analogous to
+the probe spot data \code{E}, \code{Eb} and \code{genes}.
 }
 
 
@@ -91,9 +100,15 @@ Michael Turewicz, \email{michael.turewicz@rub.de}
 
 \note{
 Don't forget to check column names in your gpr files. They may differ from the
-default settings of \code{loadGPR()}. Note that if \code{array.type} is not
-\code{"ProtoArray"}, no aggregation will be done and all computations will be
-performed by \code{limma}'s \code{read.maimages()}.  
+default settings of \code{loadGPR()} and should be renamed to the default column
+names (see also the exemplary gpr files accompanying PAA as a reference for the
+default column names). At worst, important columns in your gpr files may be
+completely missing and should be added in order to provide all information
+needed by PAA.
+
+Note that if \code{array.type} is not \code{"ProtoArray"}, neither aggregation
+will be done nor controls components will be added to the returned object of
+class \code{EListRaw}.  
 }
 
 

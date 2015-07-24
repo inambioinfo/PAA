@@ -18,9 +18,7 @@ output.path <- paste(cwd, "/demo/demo_output",  sep="")
 
 #load expression lists
 # --> loading 'elist'
-load(paste(cwd, "/extdata/Alzheimer.RData", sep=""))
-# --> loading 'controls.elist'
-load(paste(cwd, "/extdata/AlzheimerControls.RData", sep=""))    
+load(paste(cwd, "/extdata/Alzheimer.RData", sep=""), verbose=TRUE)  
 #shuffleData(elist=elist, n1=20, n2=20, label1="A", label2="B")
 
 
@@ -57,12 +55,11 @@ elist <- batchFilter(elist=elist, lot1=lot1, lot2=lot2, p.thresh=0.001,
  fold.thresh=3, output.path=output.path)
 elist <- limma:::backgroundCorrect(elist, method="normexp",
  normexp.method="saddle")
-plotNormMethods(elist=elist, include.rlm=TRUE, controls.elist=controls.elist)
-plotNormMethods(elist=elist, include.rlm=TRUE, controls.elist=controls.elist,
- output.path=paste(cwd,"/demo/demo_output",sep=""))
+plotNormMethods(elist=elist, include.rlm=TRUE)
+plotNormMethods(elist=elist, include.rlm=TRUE,
+  output.path=paste(cwd,"/demo/demo_output",sep=""))
 plotMAPlots(elist=elist, idx=10, include.rlm=FALSE)
 plotMAPlots(elist=elist, idx="all", include.rlm=TRUE,
- controls.elist=controls.elist,
  output.path=paste(cwd,"/demo/demo_output",sep=""))
 elist <- normalizeArrays(elist=elist, method="cyclicloess",
  cyclicloess.method="pairs")
@@ -108,8 +105,8 @@ pvaluePlot(elist=elist.unlog, group1=c1, group2=c2, method="mMs",
 
 #differential analysis
 output <- elist.unlog$E
-rownames(output) <- paste(elist.unlog$genes[,1], " ", elist.unlog$genes[,3],
- " ", elist.unlog$genes[,2], sep="")
+rownames(output) <- paste(elist.unlog$genes$Block, elist.unlog$genes$Row,
+  elist.unlog$genes$Column)
 write.table(x=cbind(rownames(output),output),
  file=paste(cwd, "/demo/demo_output/data.txt",  sep=""), sep="\t", eol="\n",
  row.names=FALSE, quote=FALSE)

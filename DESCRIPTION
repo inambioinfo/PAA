@@ -7,7 +7,7 @@ Authors@R: c(person("Michael", "Turewicz", role=c("aut", "cre"),
 		    email="martin.eisenacher@rub.de"))
 Author: Michael Turewicz [aut, cre], Martin Eisenacher [ctb, cre]
 Maintainer: Michael Turewicz <michael.turewicz@rub.de>, Martin Eisenacher <martin.eisenacher@rub.de>
-Depends: R (>= 3.0.3), Rcpp (>= 0.10.6.1)
+Depends: R (>= 3.2.0), Rcpp (>= 0.11.6)
 Imports: e1071, limma, MASS, mRMRe, randomForest, ROCR, sva
 LinkingTo: Rcpp
 Suggests: BiocStyle, RUnit, BiocGenerics, vsn

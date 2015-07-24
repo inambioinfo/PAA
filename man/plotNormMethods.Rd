@@ -17,28 +17,22 @@ normalization provided by PAA.
 
 
 \usage{
-plotNormMethods(elist = NULL, include.rlm=FALSE, controls.elist=NULL,
-gpr.path=NULL, targets.path=NULL, contr.names=NULL, output.path = NULL)
+plotNormMethods(elist = NULL, include.rlm=FALSE, controls="internal",
+output.path = NULL)
 }
 
 
 
 \arguments{
-  \item{elist}{ \code{EListRaw} object containing raw data (mandatory). }
+  \item{elist}{ \code{EListRaw} object containing raw data (mandatory).}
   \item{include.rlm}{ boolean indicating whether RLM normalization should be
-  included (for ProtoArrays only, deafault: FALSE). }
-  \item{controls.elist}{ \code{EListRaw} object containing intensity values of
-  control features for RLM normalization for ProtoArrays (optional). }
-  \item{gpr.path}{ when controls.elist is not defined: path to original gpr
-  files for loading control feature intensities for ProtoArray RLM normalization
-  (optional). }
-  \item{targets.path}{ when controls.elist is not defined: path to original
-  targets file for loading control feature intensities for ProtoArray RLM
-  normalization (optional). }
-  \item{contr.names}{ character vector containing the names of the control
-  features for ProtoArray RLM normalization (optional). }
+  included (for ProtoArrays only, deafault: FALSE).}
+  \item{controls}{ sring indicating the ProtoArray controls for \code{rlm}
+  normalization (optional). Valid options are \code{"internal"} (default),
+  \code{"external"}, \code{"both"} or a regular expression defining a specific
+  control or a specific set of controls.}
   \item{output.path}{ string indicating a folder for saving the boxplots as tiff
-  files (optional). }
+  files (optional).}
 }
 
 
@@ -67,7 +61,7 @@ Michael Turewicz, \email{michael.turewicz@rub.de}
 \examples{
 cwd <- system.file(package="PAA")
 load(paste(cwd, "/extdata/Alzheimer.RData", sep=""))
-elist <- elist[elist$genes$Block < 10,]
+elist <- elist[elist$genes$Block == 1,]
 plotNormMethods(elist=elist)
 }
 
