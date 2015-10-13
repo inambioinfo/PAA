@@ -1,0 +1,57 @@
+*********************************************
+*                                           *
+*    PAA (PROTEIN ARRAY ANALYZER) README    *
+*                                           *
+*********************************************
+
+---------------------------------
+| 1. PAA - PACKAGE INSTALLATION |
+---------------------------------
+The recommended way to install PAA is to type the commands described below in the R console:
+
+> # only if you install a Bioconductor package for the first time
+> source("http://www.bioconductor.org/biocLite.R")
+> # else
+> library("BiocInstaller")
+> biocLite("PAA", dependencies=TRUE)
+
+This will install PAA including all dependencies.
+
+
+
+---------------------------------
+| 2. RANDOM JUNGLE INSTALLATION |
+---------------------------------
+PAA has an external dependency that is needed to provide full functionality. This external dependency is the free C++ software package Random Jungle (RJ)
+that can be downloaded from http://www.randomjungle.de/. PAA will be usable without RJ. However, it needs this package for random jungle
+recursive feature elimination (RJ-RFE) provided by the function selectFeatures(). Please follow the following instructions for your OS to install RJ properly
+on your machine.
+
+2.1 Windows
+-----------
+(a) Go to "http://www.randomjungle.de/".
+(b) Download and unzip the appropriate Windows archive (32 bit 0r 64 bit) containing precompiled RJ binaries.
+(c) Make RJ available for PAA by adding the path to the binaries (e.g., "C:\rjungle\programs\rjungle\bin") to the PATH variable.
+(d) As a quick test for a successful installation type "rjungle --version" or "rjungle --help" in the Windows Command Prompt.
+
+2.2 Linux
+---------
+(a) Go to "http://www.randomjungle.de/".
+(b) Download and extract the appropriate Linux tarball (32 bit 0r 64 bit) containing precompiled RJ binaries.
+(c) Copy the binaries "rjungle" and "rjungle_static" to "/usr/local/bin" to make RJ available for PAA.
+(d) As a quick test for a successful installation type "rjungle --version" or "rjungle --help" in the Linux console.
+
+2.3 Mac
+-------
+Unfortunately in the medium term there will be no Mac binaries available on "http://www.randomjungle.de/". But it is planned in the long term (according to the
+RJ developers). As a consequence RJ has to be compiled from the source code.
+(a) Install gcc (download from "https://gcc.gnu.org/") via "configure", "make" and "make install".
+(b) Download boost(e.g., "boost_1_55_0.tar.bz2" from "http://www.boost.org/") and install it via "tar --bzip2 -xf /path/to/boost_1_55_0.tar.bz2".
+(c) Install gsl (download from "http://www.gnu.org/software/gsl/") via "configure", "make" and "make install".
+(d) Download "randomjungle-master.zip" from "https://github.com/insilico/randomjungle" via the "Download ZIP" button.  
+(e) Unzip "randomjungle-master.zip" then cd into the new randomjungle-master order and "make clean".
+(f) "./configure CXX='/usr/local/bin/gcc' CXXFLAGS='-fpermissive -lstdc++' --with-boost='/usr/local/boost_1_55_0'" (-lstdc++ is needed to solve possible linking errors).
+(g) "make".
+(h) "make install".
+(i) By default the binaries "rjungle" and "rjungle_static" will be installed in "/usr/local/bin" and should be available for PAA immediately.
+(j) As a quick test for a successful installation type "rjungle --version" or "rjungle --help" in the Mac terminal.

@@ -1,0 +1,14 @@
+useDynLib(PAA, .registration = TRUE)
+
+export(batchAdjust, batchFilter, diffAnalysis, loadGPR, mMsMatrix, normalizeArrays, plotFeatures, plotFeaturesHeatmap, plotMAPlots, plotNormMethods, preselect, printFeatures, pvaluePlot, selectFeatures, shuffleData, volcanoPlot)
+
+import(Rcpp)
+
+importMethodsFrom(mRMRe, solutions)
+importFrom(mRMRe, mRMR.classic, mRMR.data)
+importFrom(e1071, svm, tune.svm)
+importFrom(MASS, psi.bisquare, rlm)
+importFrom(randomForest, randomForest)
+importFrom(ROCR, performance, prediction)
+importFrom(sva, ComBat)
+importFrom(limma, normalizeBetweenArrays, normalizeVSN, read.maimages, readTargets)
