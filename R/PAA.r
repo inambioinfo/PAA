@@ -1,68 +1,10 @@
 ##########################################################################
-#           ProteinArrayAnalyzer (PAA) - version 1.3.1                   #
+#                      ProteinArrayAnalyzer (PAA)                        #
 ##########################################################################
-#
-#
-#
-##########################################################################
-#                            SETTINGS                                    #
-##########################################################################
-
-#options(scipen=100000) # important because: correct p-value output and sorting
-                       # after read.table 
-#options(stringsAsFactors=FALSE)
-#options(check.bounds=FALSE)
 
 ##########################################################################
 #                            FUNCTIONS                                   #
 ##########################################################################
-
-#+++++++++++++++++++++++++++ P_Mij +++++++++++++++++++++++++++++++++++++++
-P_Mij <- function(n1=NULL, n2=NULL, m=NULL, i=NULL) {
-    if(is.null(n1) || is.null(n2) || is.null(m) || is.null(i)) {
-        stop("ERROR: Not all mandatory arguments have been defined!")
-    }
-    return(choose(n1+n2-m-i, n2-i)*choose(m+i-1,i-1)/choose(n1+n2, n1))
-}
-#+++++++++++++++++++++++++++ P_Mij +++++++++++++++++++++++++++++++++++++++
-
-#+++++++++++++++++++++++++++ pij +++++++++++++++++++++++++++++++++++++++
-pij <- function(n1=NULL, n2=NULL, i=NULL, mvector=NULL){
-    if(is.null(n1) || is.null(n2) || is.null(i) || is.null(mvector)) {
-        stop("ERROR: Not all mandatory arguments have been defined!")
-    }
-    m <- mvector[i]
-    if(i == 0) {
-        return(1)
-    }
-    if(i <= n2){
-        auspr <- 0:n1
-        dichte <- mapply("P_Mij", n1=n1, n2=n2, m=auspr, i=i)
-        if(m <= n1){
-            p <- sum(dichte[{m+1}:{n1+1}])
-        }else{
-            stop("ERROR in pij: m > n1")
-        }
-        return(p)
-    }else{
-        stop("ERROR in pij: i > n2")
-    }
-}
-#+++++++++++++++++++++++++++ pij +++++++++++++++++++++++++++++++++++++++
-
-#+++++++++++++++++++++++++++ mCountOld +++++++++++++++++++++++++++++++++++++++
-mCountOld <- function(vector1=NULL, vector2=NULL, idx=NULL, above=1500,
-  between=400) {
-    if(is.null(vector1) || is.null(vector2) || is.null(idx)) {
-        stop("ERROR: Not all mandatory arguments have been defined!")
-    }
-    tmp <- length(vector2)+1-idx
-    cutoff <- sort(vector2,partial=tmp)[tmp] + between
-    vector1 <- {vector1-above}/max(cutoff-above,1)
-    count <- length(vector1[vector1 >= 1])
-    return(list(count=count, cutoff=cutoff))
-}
-#+++++++++++++++++++++++++++ mCountOld +++++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++++++++++++ substitute +++++++++++++++++++++++++++++++++++++++
 substitute <- function(brc=NULL) {
@@ -616,61 +558,6 @@ rf.rfe <- function(iteration=NULL, datamatrix=NULL, output.path=NULL,
     }
 }
 #+++++++++++++++++++++++++++ rf.rfe +++++++++++++++++++++++++++++++++++++++
-
-#+++++++++++++++++++++++++++ final.classify.rf +++++++++++++++++++++++++++++++++
-#final.classify <- function(set=NULL, trainset=NULL, testset=NULL,
-#  classes_train=NULL, classes_test=NULL, label1="A", label2="B"){
-#    # DELETE SET -> NOT USED ANY MORE!!!
-#    if(is.null(set) || is.null(trainset) || is.null(testset) ||
-#      is.null(classes_train) || is.null(classes_test)) {
-#        stop("ERROR: Not all mandatory arguments have been defined!")
-#    }
-#    
-#    TP_total <- 0
-#    FP_total <- 0
-#    TN_total <- 0
-#    FN_total <- 0
-#
-#    train_dat1 <- t(trainset[,-1])
-#    test_dat1 <- t(testset[,-1]) 
-#    train_dat2 <- data.frame(train_dat1, classes_train)
-#    test_dat2 <- data.frame(test_dat1, classes_test)
-#    names(train_dat2) <- substitute(testset$BRC)
-#    names(test_dat2) <- names(train_dat2)
-#    names(train_dat2)[ncol(train_dat2)] <- "classes"
-#    names(test_dat2)[ncol(test_dat2)] <- "classes"
-#
-#    for (i in 1:100){
-#        model_randomForest <- randomForest(classes ~ ., data=train_dat2,
-#          importance=TRUE, keep.forest=TRUE, ntree=nrow(trainset)*10,
-#          mtry=nrow(trainset))
-#        #save(model_randomForest, file=final.classifier.path)
-#        pred_rf <- predict(object=model_randomForest, newdata=test_dat2,
-#          type="response", norm.votes=TRUE)
-#        confusion_matrix <-
-#          table(observed = factor(classes_test,
-#          levels=sort(c(label1, label2))), predicted = pred_rf)
-#
-#        TP <- confusion_matrix[1,1]
-#        FP <- confusion_matrix[2,1]
-#        TN <- confusion_matrix[2,2]
-#        FN <- confusion_matrix[1,2]
-#        TP_total <- TP_total+TP
-#        FP_total <- FP_total+FP
-#        TN_total <- TN_total+TN
-#        FN_total <- FN_total+FN
-#    }
-#    ACCURACY_total <- {TP_total+TN_total}/{TP_total+FP_total+TN_total+FN_total}
-#    SENSITIVITY_total <- TP_total/{TP_total+FN_total}   #=TPR
-#    SPECIFITY_total <- TN_total/{TN_total+FP_total}   #=(1-FPR)
-#    #FPR_total <- FP_total/{FP_total+TN_total}   #=(1-SPECIFITY)
-#    message(paste("test set classification - ACCURACY:", ACCURACY_total, ",
-#      SENSI: ", SENSITIVITY_total, ", SPECI: ", SPECIFITY_total, sep=""), "\n")
-#    results <- list(accuracy=ACCURACY_total,
-#      sensitivity=SENSITIVITY_total, specificity=SPECIFITY_total)
-#    return(results)
-#}
-#+++++++++++++++++++++++++++ final.classify.rf +++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++++++++++++ final.classify.rf +++++++++++++++++++++++++++++++++
 final.classify.rf <- function(trainset=NULL, testset=NULL, classes_train=NULL,
@@ -1509,24 +1396,6 @@ mMs2 <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
 }
 #+++++++++++++++++++++++++++ mMs2 +++++++++++++++++++++++++++++++++++++++
 
-#++++++++++++++++++++++++++ mMsMatrixOld +++++++++++++++++++++++++++++++++++++++
-mMsMatrixOld <- function(n1=NULL, n2=NULL){
-    if(is.null(n1) || is.null(n2)) {
-        stop("ERROR: Not all mandatory arguments have been defined!")
-    }
-    output.matrix <- matrix(nrow=n2,ncol=n1)
-    for(m in 1:n1) {
-        output.matrix[,m] <-
-          mapply("pij", i=1:n2, MoreArgs=list(n1=n1, n2=n2, mvector=rep(m,n2)))
-        #message('constructing minimum M statistic matrix: ',
-        #  round(m*100/{n1-1}), '%\r', sep="")
-    }
-    output.matrix <- cbind(rep(1,n2),output.matrix)
-    #message('constructing minimum M statistic matrix: ', '100', '%\n', sep="")
-    return(output.matrix)
-}
-#++++++++++++++++++++++++++ mMsMatrixOld +++++++++++++++++++++++++++++++++++++++
-
 #+++++++++++++++++++++++++++ loadGPR +++++++++++++++++++++++++++++++++++++++
 loadGPR <- function(gpr.path=NULL, targets.path=NULL, array.type="ProtoArray",
   protoarray.aggregation="min", array.columns=list(E="F635 Median",
@@ -1548,17 +1417,21 @@ loadGPR <- function(gpr.path=NULL, targets.path=NULL, array.type="ProtoArray",
           rep("NA",nrow(elist.tmp$genes)), stringsAsFactors=FALSE)
         colnames(elist.tmp$genes)[ncol(elist.tmp$genes)] <- "Description"
         features <- grep("^Hs~", elist.tmp$genes$Name)
-        controls <-
-          grep("(^HumanIg|^Anti-HumanIg|^V5control|Anti-human-Ig|V5Control)",
-          elist.tmp$genes$Name)
+        controls <- grep("^Hs~", elist.tmp$genes$Name, invert=TRUE)
+        empty <- grep("^Empty", elist.tmp$genes$Name) 
+        #controls <-
+        #  grep("(^HumanIg|^Anti-HumanIg|^V5control|Anti-human-Ig|V5Control)",
+        #  elist.tmp$genes$Name)
         elist.tmp$genes$Description[features] <- "Feature"
-        elist.tmp$genes$Description[controls] <- "Control" 
+        elist.tmp$genes$Description[controls] <- "Control"
+        elist.tmp$genes$Description[empty] <- "Empty"  
     } 
 
     # If no match, grep will return 'integer(0)' resulting in an empty elist$E
     # in the following lines. Hence the following if-statements are necessary:
     if(any(grep("(^Empty$|^NA$)", elist.tmp$genes$Description))){
-      elist.tmp <- elist.tmp[-grep("(^Empty$|^NA$)", elist.tmp$genes$Description),]
+      elist.tmp <- elist.tmp[-grep("(^Empty$|^NA$)",
+       elist.tmp$genes$Description),]
     }
     if(any(grep("^Control$", elist.tmp$genes$Description))){
       elist <- elist.tmp[-grep("^Control$", elist.tmp$genes$Description),]
@@ -1578,6 +1451,10 @@ loadGPR <- function(gpr.path=NULL, targets.path=NULL, array.type="ProtoArray",
         elist$E[row(elist$E)[,1]%%2==1,] <-
           (elist$E[row(elist$E)[,1]%%2==1,]+elist$E[row(elist$E)[,1]%%2==0,])/2
         elist <- elist[-row(elist)[,1]%%2==1,]
+    }else if(array.type=="ProtoArray" && protoarray.aggregation=="none"){
+        cat("No aggregation performed.\n")
+    }else{
+        stop("ERROR: Unknown aggregation approach!")
     }
     
     # Adding controls data to the EListRaw object for ProtoArrays in order to
@@ -1700,37 +1577,6 @@ batchFilter <- function(elist=NULL, lot1=NULL, lot2=NULL, p.thresh=0.05,
     return(elist)
 }
 #+++++++++++++++++++++++++++ batchFilter +++++++++++++++++++++++++++++++++++++++
-
-#++++++++++++++++++++++++++ minMaxNorm() +++++++++++++++++++++++++++++++++++++++
-
-minMaxNorm <- function(x=NULL, min.old=NULL, max.old=NULL, min.new=NULL,
-  max.new=NULL) {
-    
-    if(is.null(x) || is.null(min.old) || is.null(max.old) || is.null(min.new)
-      || is.null(max.new)) {
-        stop("ERROR: Not all mandatory arguments have been defined!")
-    }
-    range.old <- {max.old-min.old}
-    range.new <- {max.new-min.new}
-    x.new <- {x-min.old} / range.old * range.new + min.new
-    return(x.new)
-}
-
-#USAGE:
-#min.old <- min(elist$E)
-#max.old <- max(elist$E)
-#row.number <- nrow(elist$E)
-#col.number <- ncol(elist$E)
-#scaled.elist <- elist
-#for(i in 1:row.number){
-#    for(j in 1:col.number){
-#        scaled.elist$E[i,j] <- minMaxNorm(x=elist$E[i,j], min.old=min.old,
-#        max.old=max.old, min.new=0, max.new=100)
-#    }
-#    message('min max norm: ', round(i*100/{row.number-1}), '%\r', sep="")
-#}
-#message('min max norm: ', '100', '%\n', sep="")
-#++++++++++++++++++++++++++ minMaxNorm() +++++++++++++++++++++++++++++++++++++++
 
 #++++++++++++++++++++++++ normalizeRLM() +++++++++++++++++++++++++++++++++++++++
 normalizeRLM <- function(elist=NULL, controls="internal", output.path=NULL){
@@ -3153,8 +2999,6 @@ pvaluePlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
     pvalues <- vector(mode="numeric", length=row.number)
 
     if(method=="mMs"){
-        #x <- c(1:length(group2))
-        #y <- c(1:length(group1))
         mCount.results1 <-
           mCount(x=elist$E[,group1], y=elist$E[,group2], z=mMs.matrix1,
           a=above, b=between)
@@ -3169,30 +3013,6 @@ pvaluePlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
               y=elist$E[zeile,group2])$p.value, TRUE)
             if(!is.numeric(p)){p <- 1}
         }else if(method=="mMs"){
-            #mCount.results <- 1 + matrix(unlist(mapply("mCountOld", idx=x,
-            #  MoreArgs=list(vector1=elist$E[zeile,group1],
-            #  vector2=elist$E[zeile,group2], above=above,
-            #  between=between))),2,length(group2))
-            #indexes <- array(c(x, mCount.results[1,]), dim=c(length(group2),2))
-            #pij.results <- mMs.matrix1[indexes]
-            #min.order1 <- which.min(pij.results)
-            #min.p1 <- pij.results[min.order1]
-            #min.count1 <- mCount.results[1,min.order1]
-            #min.cutoff1 <- mCount.results[2,min.order1]
-
-            #mCount.results <- 1 + matrix(unlist(mapply("mCountOld", idx=y,
-            #  MoreArgs=list(vector1=elist$E[zeile,group2],
-            #  vector2=elist$E[zeile,group1], above=above,
-            #  between=between))),2,length(group1))
-            #indexes <- array(c(y, mCount.results[1,]), dim=c(length(group1),2))
-            #pij.results <- mMs.matrix2[indexes]
-            #min.order2 <- which.min(pij.results)
-            #min.p2 <- pij.results[min.order2]
-            #min.count2 <- mCount.results[1,min.order2]
-            #min.cutoff2 <- mCount.results[2,min.order2]
-
-            #p <- min(min.p1,min.p2)
-            
             min.p1 <- mCount.results1$mMs[zeile]
             min.p2 <- mCount.results2$mMs[zeile]
             p <- min(min.p1,min.p2)
@@ -3385,94 +3205,6 @@ volcanoPlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
 }
 #+++++++++++++++++++++++++++ volcanoPlot +++++++++++++++++++++++++++++++++++++++
 
-#++++++++++++++++++++++++ diffAnalysisOld ++++++++++++++++++++++++++++++++++++++
-diffAnalysisOld <- function(input=NULL, label1=NULL, label2=NULL, class1=NULL,
-  class2=NULL, output.path=NULL, mMs.matrix1=NULL, mMs.matrix2=NULL, above=1500,
-  between=400, features=NULL, feature.names=NULL){
-  
-    if(is.null(input) || is.null(label1) || is.null(label2) || is.null(class1)
-      || is.null(class2) || is.null(mMs.matrix1) || is.null(mMs.matrix2)) {
-        stop("ERROR: Not all mandatory arguments have been defined!")
-    }
-    row.number <- nrow(input)
-    col.number <- ncol(input)
-    output <- matrix(nrow=row.number, ncol=12)
-    colnames(output) <- c("BRC", "t test", "FDR(t)", "min. M stat. (mMs)",
-      "FDR(mMs)", "fold change", paste("mean ", class1, sep=""),
-      paste("mean ", class2, sep=""), paste("median ", class1, sep=""),
-      paste("median ", class2, sep=""), paste("sd ", class1, sep=""),
-      paste("sd ", class2, sep=""))
-
-    x <- c(1:length(label2))
-    y <- c(1:length(label1))
-    for(zeile in 1:row.number) {
-        output[zeile,1] <- rownames(input)[zeile]
-
-
-        
-        p <- try(t.test(x=as.numeric(input[zeile,label1]),
-          y=as.numeric(input[zeile,label2]))$p.value, TRUE)
-        if(!is.numeric(p)){output[zeile,2] <- 1}else{output[zeile,2] <- p}
-        
-        
-        
-        mCount.results <- 1 + matrix(unlist(mapply("mCount",
-          idx=x, MoreArgs=list(vector1=as.numeric(input[zeile,label1]),
-          vector2=as.numeric(input[zeile,label2]), above=above,
-          between=between))),2,length(label2))
-        indexes <- array(c(x, mCount.results[1,]), dim=c(length(label2),2))
-        pij.results <- mMs.matrix1[indexes]
-        min.order1 <- which.min(pij.results)
-        min.p1 <- pij.results[min.order1]
-        min.count1 <- mCount.results[1,min.order1]
-        min.cutoff1 <- mCount.results[2,min.order1]
-        mCount.results <- 1 + matrix(unlist(mapply("mCount",
-          idx=y, MoreArgs=list(vector1=as.numeric(input[zeile,label2]),
-          vector2=as.numeric(input[zeile,label1]), above=above,
-          between=between))),2,length(label1))
-        indexes <- array(c(y, mCount.results[1,]), dim=c(length(label1),2))
-        pij.results <- mMs.matrix2[indexes]
-        min.order2 <- which.min(pij.results)
-        min.p2 <- pij.results[min.order2]
-        min.count2 <- mCount.results[1,min.order2]
-        min.cutoff2 <- mCount.results[2,min.order2]
-        output[zeile,4] <- min(min.p1,min.p2)
-
-
-
-        output[zeile,6] <-
-          mean(as.numeric(input[zeile, label1])) /
-          mean(as.numeric(input[zeile, label2]))
-        output[zeile,7] <- mean(as.numeric(input[zeile, label1]))
-        output[zeile,8] <- mean(as.numeric(input[zeile, label2]))
-        output[zeile,9] <- median(as.numeric(input[zeile, label1]))
-        output[zeile,10] <- median(as.numeric(input[zeile, label2]))
-        output[zeile,11] <- sd(as.numeric(input[zeile, label1]))       
-        output[zeile,12] <- sd(as.numeric(input[zeile, label2]))
-    }
-    output[,3] <- p.adjust(p=as.numeric(output[,2]), method="fdr")
-    output[,5] <- p.adjust(p=as.numeric(output[,4]), method="fdr")
-    
-    if(!is.null(output.path)){
-        if(is.null(features)){
-            write.table(x=output, file=paste(output.path, "/diffAnalysis.txt",
-              sep=""), sep="\t", eol="\n", row.names=FALSE, quote=FALSE)
-        }else{
-            if(is.null(feature.names)){
-                write.table(x=output[features,], file=paste(output.path,
-                  "/diffAnalysis.txt", sep=""), sep="\t", eol="\n",
-                  row.names=FALSE, quote=FALSE)
-            }else{
-                write.table(x=cbind(output[features,],feature.names),
-                  file=paste(output.path, "/diffAnalysis.txt", sep=""),
-                  sep="\t", eol="\n", row.names=FALSE, quote=FALSE)
-            }
-        }
-    }
-    return(output)
-}
-#+++++++++++++++++++++++++ diffAnalysisOld +++++++++++++++++++++++++++++++++++++
-
 #+++++++++++++++++++++++++++ diffAnalysis ++++++++++++++++++++++++++++++++++++++
 diffAnalysis <- function(input=NULL, label1=NULL, label2=NULL, class1=NULL,
   class2=NULL, output.path=NULL, mMs.matrix1=NULL, mMs.matrix2=NULL, above=1500,
@@ -3547,307 +3279,221 @@ diffAnalysis <- function(input=NULL, label1=NULL, label2=NULL, class1=NULL,
 }
 #++++++++++++++++++++++++++ diffAnalysis +++++++++++++++++++++++++++++++++++++++
 
-#+++++++++++++++++++++++++++ test.mMs +++++++++++++++++++++++++++++++++++++++
-
-test.mMs <- function(mMs.results=NULL, prospector.settings=NULL,
-  output.path=NULL){
+#++++++++++++++++++++++++++++ plotTiff +++++++++++++++++++++++++++++++++++++++++
+plotTiff <- function (plot.ma=NULL, tag=NULL, idx=NULL, array.label=NULL,
+  block.dim=NULL, colpal="heat.colors", output.path=NULL) {
     
-    if(is.null(mMs.results) || is.null(prospector.settings) ||
-      is.null(output.path)) {
+  if(!is.null(output.path)){
+      #Create output directory if not present. Warning if already present will
+      #be supressed
+      dir.create(file.path(output.path, "array_plots"), showWarnings = FALSE)
+      #Defining the dimensions and layout of the heatmap and its color key
+      # 1. Heatmap
+      # 2. Row dendrogram
+      # 3. Column dendrogram
+      # 4. Key
+      #
+      # Layout here:
+      # 0   3
+      # 2   1
+      # 0   4
+      #
+      #
+      # --> lwid and lhei are relative values: 1 = 100%, 2 = 200%, etc.
+      lmat <-  rbind(c(0,3),c(2,1),c(0,4)) 
+      lwid <-  c(1, 5)
+      lhei <-  c(0.75,6,1.5)
+    
+      #Opening tiff device
+      tiff(
+        paste0(output.path,"/array_plots/",Sys.Date(),"_array_plot_",tag,"_",
+        idx,".tif"),
+        width = 2000, 
+        height = 5000, 
+        compression = "lzw", 
+        pointsize = 10, 
+        res = 300
+      )
+      heatmap.2(
+        plot.ma,              # Source data
+        dendrogram="none",    # Col and Row Dendrogram         
+        trace="none",         # Trace line in the main histogram
+        Rowv=FALSE,           # Row clustering
+        Colv=FALSE,           # Column clustering
+        na.color="black",     # Color of NA values
+        col=colpal,           # Color palette
+        breaks = 50,          # Number of breaks between lowest & highest color
+        lmat = lmat,          # Defined above
+        lhei = lhei,          # Defined above
+        lwid = lwid,          # Defined above
+        main = paste0(array.label," Array Plot"), # Heatmap title
+        margins = c(5,10),    # Label margins
+        colsep = c((1:4)*block.dim), # Separation of Columns
+        rowsep = c((1:12)*22),  # Separation of Rows
+        sepwidth = c(0.0025, 0.0025),  # Separation width
+        cexCol = 0.6,         # Margins for Col names
+        cexRow = 0.6,         # Margins for Row names
+        denscol = "black",    # Density map Histogram color
+        keysize = 0.01,          # Color key size
+        symkey = FALSE,       # Symmetry of color key around 0
+        symbreaks = FALSE,    # Symmetry of breaks around 0
+        na.rm = TRUE          # Remove NA values
+      )
+      dev.off()
+    }else{
+      #Defining the dimensions and layout of the heatmap and its color key
+      lmat <-  rbind(c(0,3,0),c(2,1,0),c(0,4,0)) 
+      lwid <-  c(0.7, 1, 0.3)
+      #lhei <-  c(0.15,1,0.3)
+      lhei <-  c(0.17,1,0.3)
+      
+      heatmap.2(
+        plot.ma,              # Source data
+        dendrogram="none",    # Col and Row Dendrogram         
+        trace="none",         # Trace line in the main histogram
+        Rowv=FALSE,           # Row clustering
+        Colv=FALSE,           # Column clustering
+        na.color="black",     # Color of NA values
+        col=colpal,           # Color palette
+        breaks = 50,          # Number of breaks between lowest & highest color
+        lmat = lmat,          # Defined above
+        lhei = lhei,          # Defined above
+        lwid = lwid,          # Defined above
+        main = paste0(array.label," Array Plot"), # Heatmap title
+        margins = c(5,10),    # Label margins
+        colsep = c((1:4)*block.dim), # Separation of Columns
+        rowsep = c((1:12)*22),  # Separation of Rows
+        sepwidth = c(0.0025, 0.0025),  # Separation width
+        cexCol = 0.6,         # Margins for Col names
+        cexRow = 0.6,         # Margins for Row names            
+        denscol = "black",    # Density map Histogram color
+        keysize = 1,          # Color key size
+        symkey = FALSE,       # Symmetry of color key around 0
+        symbreaks = FALSE,    # Symmetry of breaks around 0
+        na.rm = TRUE          # Remove NA values
+      )
+    }
+} 
+#++++++++++++++++++++++++++++ plotTiff +++++++++++++++++++++++++++++++++++++++++
+
+#+++++++++++++++++++++++++++++++ plotArray +++++++++++++++++++++++++++++++++++++
+plotArray <- function(elist=NULL, idx=NULL, data.type="fg", log=NULL,
+  normalized=NULL, protoarray.aggregation=NULL, colpal="heat.colors",
+  output.path=NULL) {  
+
+  if(is.null(elist) || is.null(idx) || is.null(log) || is.null(normalized) ||
+    is.null(protoarray.aggregation)) {
         stop("ERROR: Not all mandatory arguments have been defined!")
+  }
+  
+  if(idx == "all"){
+      idx <- 1:ncol(elist$E)
+  }
+  
+  if(protoarray.aggregation=="min"){
+      block.dim <- 11
+      row.len <- nrow(elist$C)
+      col.len <- ncol(elist$C)
+      tmp.col.len <- (row.len*col.len)/2
+      elist$C[row(elist$C)[,1]%%2==1] <-
+        matrix(apply(matrix(elist$C,2,tmp.col.len),2,min),row.len/2,col.len)
+      elist$C <- elist$C[row(elist$C)[,1]%%2==1,]
+      elist$Cb[row(elist$Cb)[,1]%%2==1] <-
+        matrix(apply(matrix(elist$Cb,2,tmp.col.len),2,min),row.len/2,col.len)
+      elist$Cb <- elist$Cb[row(elist$Cb)[,1]%%2==1,]
+      elist$cgenes <- elist$cgenes[row(elist$cgenes)[,1]%%2==1,]
+      
+      ref.df <- data.frame("Block"=rep(1:48, each=22*22),
+        "Column"=1:22, "Row"=rep(1:22, each=22))
+      ref.df <- ref.df[row(ref.df)[,1]%%2==1,]
+  }else if(protoarray.aggregation=="mean"){
+      block.dim <- 11
+      elist$C[row(elist$C)[,1]%%2==1,] <-
+        (elist$C[row(elist$C)[,1]%%2==1,]+elist$C[row(elist$C)[,1]%%2==0,])/2
+      elist$C <- elist$C[row(elist$C)[,1]%%2==1,]
+      elist$Cb[row(elist$Cb)[,1]%%2==1,] <-
+        (elist$Cb[row(elist$Cb)[,1]%%2==1,]+
+        elist$Cb[row(elist$Cb)[,1]%%2==0,])/2
+      elist$Cb <- elist$Cb[row(elist$Cb)[,1]%%2==1,]
+      elist$cgenes <- elist$cgenes[row(elist$cgenes)[,1]%%2==1,]
+      
+      ref.df <- data.frame("Block"=rep(1:48, each=22*22),
+        "Column"=1:22, "Row"=rep(1:22, each=22))
+      ref.df <- ref.df[row(ref.df)[,1]%%2==1,]
+  }else if(protoarray.aggregation=="none"){
+      block.dim <- 22
+      ref.df <- data.frame("Block"=rep(1:48, each=22*22),
+        "Column"=1:22, "Row"=rep(1:22, each=22))
+  }else{
+      stop("ERROR: Unknown aggregation approach!")
+  }
+  
+  if(is.null(output.path) && length(idx)>1){
+      par(ask=TRUE)
+  }
+  
+  #For any number of idx  
+  for(i in 1:length(idx)) {    
+    array.label <- colnames(elist$E)[idx[i]]   
+    genes.merged <- rbind(elist$genes, elist$cgenes)                   
+         
+    if(normalized==TRUE && data.type=="fg") {
+      #During normalization the data is logarithmized. 
+      #For a proper plot, control data has to be logarithmized too. 
+      data.merged <- c(elist$E[,idx[i]], log2(elist$C[,idx[i]]))
+    } else if(normalized==FALSE && data.type=="fg"){
+      data.merged <- c(elist$E[,idx[i]], elist$C[,idx[i]])       
+    } else if(normalized==FALSE && data.type=="bg"){
+      #Load background data
+      data.merged <- c(elist$Eb[,idx[i]], elist$Cb[,idx[i]])
     }
     
-    cwd <- system.file(package="PAA")
+    transfer.list <- cbind(genes.merged, data.merged)                    
+    colnames(transfer.list)[ncol(transfer.list)] <- array.label            
+    tl <- transfer.list  
+  
+    #Merge array data into reference data frame
+    full.df <- merge(ref.df, tl, by = c("Block", "Column", "Row"), all.x = TRUE)
+  
+    #Modulo used to define first and last block in a row 
+    x <- unique(full.df$Block)%%4
     
-    #prospector <-
-    #  read.table(file=paste("C:/Program Files (x86)/Invitrogen/Prospector/",
-    #  "Comparison Results IRP/",
-    #  "ADvsNDC_MStatistics_internRLM_a1500_b400_mean2.txt",sep=""),
-    #  header=TRUE, sep="\t", na.strings="NA", dec=".", strip.white=TRUE,
-    #  quote="")
-    #idx <-
-    #  paste(prospector[,"Block"], prospector[,"Row"], prospector[,"Column"],
-    #  sep=" ")
-    #row.names(prospector) <- idx
-    #save(prospector, file=paste(cwd,
-    #  "/extdata/Prospector_internRLM_a1500_b400_mean.RData", sep=""))
-    #test.mMs(mMs.results=mMs.results,
-    #  prospector.settings="noNorm_a1500_b400_min", output.path=output.path)
-    
-    if(prospector.settings == "noNorm_a1500_b400_min") {
-        prospector <- load(file=paste(cwd,
-          "/extdata/Prospector_noNorm_a1500_b400_min.RData", sep=""))
-        diff.n <- length(which(round(as.numeric(mMs.results[,"M Score"]),7)
-          - round(as.numeric(prospector[,"P.Value"]),7) != 0))
-          # round(.,7)->no diff., no round->many rounding/float
-          # number representation differences 
-        tiff(paste(output.path,"/test_mMs_", prospector.settings, ".tiff",
-          sep=""), width=2000, height=2000, pointsize=15, compression="lzw",
-          res=300)
-            plot(round(as.numeric(mMs.results[,"M Score"]),7)
-              - round(as.numeric(prospector[,"P.Value"]),7),
-              ylab="Mpaa(x) - Mpro(x)", main=paste("PAA M Score (Mpaa)",
-              " - Prospector M Score (Mpro)\nnumber of different scores: ",
-              diff.n, sep=""))
-        dev.off()
-    }else if(prospector.settings == "noNorm_a1500_b400_mean"){
-        prospector <-
-          load(file=paste(cwd,
-          "/extdata/Prospector_noNorm_a1500_b400_mean.RData", sep=""))
-        diff.n <- length(which(round(as.numeric(mMs.results[,"M Score"]),7)
-          - round(as.numeric(prospector[,"P.Value"]),7) != 0))
-          # round(.,7)->no diff., no round->many rounding/float
-          # number representation differences 
-        tiff(paste(output.path,"/test_mMs_", prospector.settings,
-          ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-          compression="lzw", res=300)
-            plot(round(as.numeric(mMs.results[,"M Score"]),7)
-              - round(as.numeric(prospector[,"P.Value"]),7),
-              ylab="Mpaa(x) - Mpro(x)", main=paste("PAA M Score (Mpaa)",
-              " - Prospector M Score (Mpro)\nnumber of different scores: ",
-              diff.n, sep=""))
-        dev.off()
-    }else if(prospector.settings == "Quantile_a1500_b400_min"){
-        prospector <- load(file=paste(cwd,
-          "/extdata/Prospector_Quantile_a1500_b400_min.RData", sep=""))
-        diff.n <- length(which(round(as.numeric(mMs.results[,"M Score"]),7)
-          - round(as.numeric(prospector[,"P.Value"]),7) != 0))
-          # round(.,7)->no diff., no round->many rounding/float
-          # number representation differences 
-        tiff(paste(output.path,"/test_mMs_", prospector.settings,
-          ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-          compression="lzw", res=300)
-            plot(round(as.numeric(mMs.results[,"M Score"]),7)
-              - round(as.numeric(prospector[,"P.Value"]),7),
-              ylab="Mpaa(x) - Mpro(x)", main=paste("PAA M Score (Mpaa)",
-              " - Prospector M Score (Mpro)\nnumber of different scores: ",
-              diff.n, sep=""))
-        dev.off()
-    }else if(prospector.settings == "Quantile_a1500_b400_mean"){
-        prospector <-
-          load(file=paste(cwd,
-          "/extdata/Prospector_Quantile_a1500_b400_mean.RData", sep=""))
-        diff.n <- length(which(round(as.numeric(mMs.results[,"M Score"]),7)
-          - round(as.numeric(prospector[,"P.Value"]),7) != 0))   
-          # round(.,7)->no diff., no round->many rounding/float
-          # number representation differences 
-        tiff(paste(output.path,"/test_mMs_", prospector.settings,
-          ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-          compression="lzw", res=300)
-            plot(round(as.numeric(mMs.results[,"M Score"]),7)
-              - round(as.numeric(prospector[,"P.Value"]),7),
-              ylab="Mpaa(x) - Mpro(x)", main=paste("PAA M Score (Mpaa)",
-              " - Prospector M Score (Mpro)\nnumber of different scores: ",
-              diff.n, sep=""))
-        dev.off()
-    }else if(prospector.settings == "bothRLM_a1500_b400_min"){
-        prospector <-
-          load(file=paste(cwd,
-          "/extdata/Prospector_bothRLM_a1500_b400_min.RData", sep=""))
-        diff.n <- length(which(round(as.numeric(mMs.results[,"M Score"]),7)
-          - round(as.numeric(prospector[,"P.Value"]),7) != 0))
-          # round(.,7)->no diff., no round->many rounding/float
-          # number representation differences 
-        tiff(paste(output.path,"/test_mMs_", prospector.settings,
-          ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-          compression="lzw", res=300)
-            plot(round(as.numeric(mMs.results[,"M Score"]),7)
-              - round(as.numeric(prospector[,"P.Value"]),7),
-              ylab="Mpaa(x) - Mpro(x)", main=paste("PAA M Score (Mpaa)",
-              " - Prospector M Score (Mpro)\nnumber of different scores: ",
-              diff.n, sep=""))
-        dev.off()
-    }else if(prospector.settings == "bothRLM_a1500_b400_mean"){
-        prospector <-
-          load(file=paste(cwd,
-          "/extdata/Prospector_bothRLM_a1500_b400_mean.RData", sep=""))
-        diff.n <- length(which(round(as.numeric(mMs.results[,"M Score"]),7)
-          - round(as.numeric(prospector[,"P.Value"]),7) != 0))
-          # round(.,7)->no diff., no round->many rounding/float
-          # number representation differences 
-        tiff(paste(output.path,"/test_mMs_", prospector.settings,
-          ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-          compression="lzw", res=300)
-            plot(round(as.numeric(mMs.results[,"M Score"]),7)
-              - round(as.numeric(prospector[,"P.Value"]),7),
-              ylab="Mpaa(x) - Mpro(x)", main=paste("PAA M Score (Mpaa)",
-              " - Prospector M Score (Mpro)\nnumber of different scores: ",
-              diff.n, sep=""))
-        dev.off()
-    }else if(prospector.settings == "externRLM_a1500_b400_min"){
-        prospector <-
-          load(file=paste(cwd,
-          "/extdata/Prospector_externRLM_a1500_b400_min.RData", sep=""))
-        diff.n <- length(which(round(as.numeric(mMs.results[,"M Score"]),7)
-          - round(as.numeric(prospector[,"P.Value"]),7) != 0))
-          # round(.,7)->no diff., no round->many rounding/float
-          # number representation differences 
-        tiff(paste(output.path,"/test_mMs_", prospector.settings,
-          ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-          compression="lzw", res=300)
-            plot(round(as.numeric(mMs.results[,"M Score"]),7)
-              - round(as.numeric(prospector[,"P.Value"]),7),
-              ylab="Mpaa(x) - Mpro(x)", main=paste("PAA M Score (Mpaa)",
-              " - Prospector M Score (Mpro)\nnumber of different scores: ",
-              diff.n, sep=""))
-        dev.off()
-    }else if(prospector.settings == "externRLM_a1500_b400_mean"){
-        prospector <-
-          load(file=paste(cwd,
-          "/extdata/Prospector_externRLM_a1500_b400_mean.RData", sep=""))
-        diff.n <- length(which(round(as.numeric(mMs.results[,"M Score"]),7) 
-          - round(as.numeric(prospector[,"P.Value"]),7) != 0))
-          # round(.,7)->no diff., no round->many rounding/float
-          # number representation differences 
-        tiff(paste(output.path,"/test_mMs_", prospector.settings,
-          ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-          compression="lzw", res=300)
-            plot(round(as.numeric(mMs.results[,"M Score"]),7)
-              - round(as.numeric(prospector[,"P.Value"]),7),
-              ylab="Mpaa(x) - Mpro(x)", main=paste("PAA M Score (Mpaa)",
-              " - Prospector M Score (Mpro)\nnumber of different scores: ",
-              diff.n, sep=""))
-        dev.off()
-    }else if(prospector.settings == "internRLM_a1500_b400_min"){
-        prospector <- load(file=paste(cwd,
-          "/extdata/Prospector_internRLM_a1500_b400_min.RData", sep=""))
-        diff.n <- length(which(round(as.numeric(mMs.results[,"M Score"]),7)
-          - round(as.numeric(prospector[,"P.Value"]),7) != 0))
-          # round(.,7)->no diff., no round->many rounding/float
-          # number representation differences 
-        tiff(paste(output.path,"/test_mMs_", prospector.settings,
-          ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-          compression="lzw", res=300)
-            plot(round(as.numeric(mMs.results[,"M Score"]),7)
-              - round(as.numeric(prospector[,"P.Value"]),7),
-              ylab="Mpaa(x) - Mpro(x)", main=paste("PAA M Score (Mpaa)",
-              " - Prospector M Score (Mpro)\nnumber of different scores: ",
-              diff.n, sep=""))
-        dev.off()
-    }else if(prospector.settings == "internRLM_a1500_b400_mean"){
-        prospector <- load(file=paste(cwd,
-          "/extdata/Prospector_internRLM_a1500_b400_mean.RData", sep=""))
-        diff.n <- length(which(round(as.numeric(mMs.results[,"M Score"]),7)
-          - round(as.numeric(prospector[,"P.Value"]),7) != 0))
-          # round(.,7)->no diff., no round->many rounding/float
-          # number representation differences 
-        tiff(paste(output.path,"/test_mMs_", prospector.settings,
-          ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-          compression="lzw", res=300)
-            plot(round(as.numeric(mMs.results[,"M Score"]),7)
-              - round(as.numeric(prospector[,"P.Value"]),7),
-              ylab="Mpaa(x) - Mpro(x)", main=paste("PAA M Score (Mpaa)",
-              " - Prospector M Score (Mpro)\nnumber of different scores: ",
-              diff.n, sep=""))
-        dev.off()
+    blocks <- 1   #Loop counter for blocks
+    block.rows <- 1   #Loop counter for block.rows
+    #Build blocks with 22 rows and 22 columns and append 4 of them for 
+    #each block.row
+    while(blocks <= length(unique(full.df$Block))) {
+      tmp.block.ma <- matrix(full.df[which(full.df$Block == blocks), 
+        array.label], byrow = FALSE, ncol = block.dim)
+      
+      #If first block in a row, create new row  
+      if(x[blocks] == 1) {
+        tmp.block.row.ma <- tmp.block.ma  
+      } else { 
+        tmp.block.row.ma <- cbind(tmp.block.row.ma, tmp.block.ma)
+      }
+      
+      #If its the 4th block in a row, once create plot.ma, after that 
+      #just append the last row to plot.ma
+      if(x[blocks] == 0) {
+        if(block.rows == 1) {
+          plot.ma <- tmp.block.row.ma
+        } else {   
+          plot.ma <- rbind (plot.ma, tmp.block.row.ma)
+        }        
+        block.rows <- block.rows + 1
+      }
+      blocks <- blocks + 1
     }
+    
+    #Log unlogarithmized Data when log=FALSE
+    #Careful when already normalized
+    if(log == FALSE) {                                      
+      plot.ma <- log2(plot.ma)
+    }
+    #Call plotTiff with the aquired data.
+    plotTiff(plot.ma, tag=data.type, idx=idx[i], array.label=array.label, 
+      block.dim=block.dim, colpal=colpal, output.path=output.path)
+  }  
 }
-
-#+++++++++++++++++++++++++++ test.mMs +++++++++++++++++++++++++++++++++++++++
-
-#+++++++++++++++++++++++++++ test.rlm +++++++++++++++++++++++++++++++++++++++
-
-test.rlm <- function(elist=NULL, prospector.settings=NULL, cwd=NULL,
-  output.path=NULL){
-    if(is.null(elist) || is.null(prospector.settings) || is.null(output.path)) {
-        stop("ERROR: Not all mandatory arguments have been defined!")
-    }
-    
-    #test.rlm(elist=elist, prospector.settings="internRLM_a1500_b400_mean",
-    #  output.path=output.path)
-    
-    cwd <- system.file(package="PAA")
-    cols <- ncol(elist$E)
-    output.path <- paste(output.path, "/testRLM", sep="")
-    dir.create(output.path)
-    
-    if(prospector.settings == "bothRLM_a1500_b400_min"){
-        prospector <- load(file=paste(cwd,
-          "/extdata/Prospector_bothRLM_a1500_b400_min.RData", sep=""))
-        for(i in 1:cols) {
-            correlation <- round(cor(prospector[,18+i], elist$E[,i]),4) 
-            tiff(paste(output.path,"/testRLM_", prospector.settings, "_", i,
-              ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-              compression="lzw", res=300)
-                plot(prospector[,18+i], elist$E[,i], xlab="Prospector",
-                  ylab="PAA",
-                  main=paste("Prospector intensities vs. PAA intensities\nr = ",
-                  correlation, sep=""))
-            dev.off()
-        } 
-    }else if(prospector.settings == "bothRLM_a1500_b400_mean"){
-        prospector <- load(file=paste(cwd,
-          "/extdata/Prospector_bothRLM_a1500_b400_mean.RData", sep=""))
-        for(i in 1:cols) {
-            correlation <- round(cor(prospector[,18+i], elist$E[,i]),4) 
-            tiff(paste(output.path,"/testRLM_", prospector.settings, "_", i,
-              ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-              compression="lzw", res=300)
-                plot(prospector[,18+i], elist$E[,i], xlab="Prospector",
-                  ylab="PAA",
-                  main=paste("Prospector intensities vs. PAA intensities\nr = ",
-                  correlation, sep=""))
-            dev.off()
-        } 
-    }else if(prospector.settings == "externRLM_a1500_b400_min"){
-        prospector <- load(file=paste(cwd, 
-          "/extdata/Prospector_externRLM_a1500_b400_min.RData", sep=""))
-        for(i in 1:cols) {
-            correlation <- round(cor(prospector[,18+i],
-              elist$E[,i]),4) 
-            tiff(paste(output.path,"/testRLM_", prospector.settings, "_", i,
-              ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-              compression="lzw", res=300)
-                plot(prospector[,18+i], elist$E[,i], xlab="Prospector",
-                  ylab="PAA",
-                  main=paste("Prospector intensities vs. PAA intensities\nr = ",
-                  correlation, sep=""))
-            dev.off()
-        } 
-    }else if(prospector.settings == "externRLM_a1500_b400_mean"){
-        prospector <- load(file=paste(cwd,
-          "/extdata/Prospector_externRLM_a1500_b400_mean.RData", sep=""))
-        for(i in 1:cols) {
-            correlation <- round(cor(prospector[,18+i], elist$E[,i]),4) 
-            tiff(paste(output.path,"/testRLM_", prospector.settings, "_", i,
-              ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-              compression="lzw", res=300)
-                plot(prospector[,18+i], elist$E[,i], xlab="Prospector",
-                  ylab="PAA",
-                  main=paste("Prospector intensities vs. PAA intensities\nr = ",
-                  correlation, sep=""))
-            dev.off()
-        } 
-    }else if(prospector.settings == "internRLM_a1500_b400_min"){
-        prospector <- load(file=paste(cwd,
-          "/extdata/Prospector_internRLM_a1500_b400_min.RData", sep=""))
-        for(i in 1:cols) {
-            correlation <- round(cor(prospector[,18+i], elist$E[,i]),4) 
-            tiff(paste(output.path,"/testRLM_", prospector.settings, "_", i,
-              ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-              compression="lzw", res=300)
-                plot(prospector[,18+i], elist$E[,i], xlab="Prospector",
-                  ylab="PAA",
-                  main=paste("Prospector intensities vs. PAA intensities\nr = ",
-                  correlation, sep=""))
-            dev.off()
-        }  
-    }else if(prospector.settings == "internRLM_a1500_b400_mean"){
-        prospector <- load(file=paste(cwd,
-          "/extdata/Prospector_internRLM_a1500_b400_mean.RData",
-          sep=""))
-        for(i in 1:cols) {
-            correlation <- round(cor(prospector[,18+i], elist$E[,i]),4) 
-            tiff(paste(output.path,"/testRLM_", prospector.settings, "_", i,
-              ".tiff",sep=""), width=2000, height=2000, pointsize=15,
-              compression="lzw", res=300)
-                plot(prospector[,18+i], elist$E[,i], xlab="Prospector",
-                ylab="PAA",
-                main=paste("Prospector intensities vs. PAA intensities\nr = ",
-                correlation, sep=""))
-            dev.off()
-        }  
-    }
-}
-
-#+++++++++++++++++++++++++++ test.rlm +++++++++++++++++++++++++++++++++++++++
+#+++++++++++++++++++++++++++++++ plotArray +++++++++++++++++++++++++++++++++++++

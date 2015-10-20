@@ -10,8 +10,8 @@ A function to read raw data from gpr files.
 
 
 \description{
-Reads an EListRaw from a set of gpr files containing ProtoArray data or other
-one-color microarray data.
+Constructs an \code{EListRaw} object from a set of gpr files containing
+ProtoArray data or other one-color microarray data.
 }
 
 
@@ -37,6 +37,7 @@ loadGPR(gpr.path = NULL, targets.path = NULL, array.type = "ProtoArray",
   duplicate aggregation should be performed. If \code{"min"} is chosen, the
   value for the corresponding feature will be the minimum of both duplicate
   values. If \code{"mean"} is chosen, the arithmetic mean will be computed.
+  Alternatively, no aggregation will be performed, if \code{"none"} is chosen.
   The default is \code{"min"} (optional).}
   \item{array.columns}{list containing the column names for foreground
   intensities (E) and background intensities (Eb) in the gpr files that is
@@ -54,12 +55,12 @@ data. Paths to a target file and to a folder containing gpr files (all gpr files
 in that folder that are listed in the targets file will be read) are mandatory.
 The folder \code{"R_HOME/library/PAA/extdata"} contains an exemplary target file
 that can be used as a template. If \code{array.type} is set to
-\code{"ProtoArray"} (default), duplicate spots will be aggregated. The
-corresponding method (\code{"min"} or \code{"mean"}) can be specified via
-\code{protoarray.aggregation}. As another ProtoArray-specific feature, control
-spot data and information will be stored in additional components of the
-returned object (see below). Arguments \code{array.columns} and
-\code{array.annotation} define the columns where \code{read.maimages()} will
+\code{"ProtoArray"} (default), duplicate spots can be aggregated. The
+corresponding method (\code{"min"}, \code{"mean"} or \code{"none"}) can be
+specified via \code{protoarray.aggregation}. As another ProtoArray-specific
+feature, control spot data and information will be stored in additional
+components of the returned object (see below). Arguments \code{array.columns}
+and \code{array.annotation} define the columns where \code{read.maimages()} will
 find foreground and background intensity values as well as other important
 columns. For \code{array.annotation} the default columns \code{"Block"},
 \code{"Column"}, \code{"Row"}, \code{"Description"}, \code{"Name"} and

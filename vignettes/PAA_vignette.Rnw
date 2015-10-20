@@ -10,7 +10,8 @@ BiocStyle::latex()
 \author{Michael Turewicz}
 
 \begin{document}
-\SweaveOpts{concordance=TRUE}
+\setkeys{Gin}{width=0.8\textwidth}
+\SweaveOpts{concordance=TRUE, pdf=FALSE, png=TRUE}
 
 \maketitle
 
@@ -38,8 +39,7 @@ analyzing an exemplary data set that accompanies this package.
 
 \subsection{Installation}
 The recommended way to install \Biocpkg{PAA} is to type the commands described
-below in the \R{} console \bioccomment{(note: an active internet connection is
-needed)}:
+below in the \R{} console (note: an active internet connection is needed):
 <<install, eval=FALSE, results=hide>>=
 # only if you install a Bioconductor package for the first time
 source("http://www.bioconductor.org/biocLite.R")
@@ -52,11 +52,11 @@ This will install \Biocpkg{PAA} including all dependencies.
 Furthermore, \Biocpkg{PAA} has an external dependency that is needed to provide
 full functionality. This external dependency is the free \textit{C++} software
 package \textit{``Random Jungle''} that can be downloaded from
-\url{http://www.randomjungle.de/}. \bioccomment{Note: \Biocpkg{PAA} will be
+\url{http://www.randomjungle.de/}. Note: \Biocpkg{PAA} will be
 usable without \textit{Random Jungle}. However, it needs this package for random
 jungle recursive feature elimination (\textit{RJ-RFE}) provided by the function
 \Rfunction{selectFeatures()}. Please follow the instructions for your OS in the
-README file to install \textit{Random Jungle} properly on your machine.}
+README file to install \textit{Random Jungle} properly on your machine.
 
 %------------------------------------------------------------------------------
 %                            Loading PAA and importing data
@@ -137,6 +137,50 @@ load(paste(cwd, "/extdata/Alzheimer.RData", sep=""))
 %------------------------------------------------------------------------------
 \newpage
 \section{Pre-processing}
+Before pre-processing the microarrays should be inspected visually for any
+strong spatial biases. In \Biocpkg{PAA} this can be done for
+\textit{ProtoArrays} using the function \Rfunction{plotArray()} which plots the
+imported \textit{ProtoArray} data in the original arrangement mimicing the
+original scan image. Thus, \Rfunction{plotArray()} is a visualization tool that
+can be used to visualize \textit{ProtoArrays} for which the original scan image
+is not available. Visual inspection of the spatial expression pattern can then
+identify possible local tendencies and strong spatial biases. Moreover, the
+array can be inspected at all stages of the pre-processing workflow in order to
+check the impact of the particular methods that have been applied.
+
+Consequently, as a first step, always the plots of the foreground signals
+(\Rcode{data.type="fg"}) should be compared with the plots of the background
+signals (\Rcode{data.type="bg"}).
+\begin{center}
+<<plotArray1, eval=TRUE, results=hide, fig=TRUE>>=
+plotArray(elist=elist, idx=3, data.type="bg", log=FALSE, normalized=FALSE,
+  protoarray.aggregation="min", colpal="topo.colors")
+@  
+\end{center}
+\begin{center}
+<<plotArray2, eval=TRUE, results=hide, fig=TRUE>>=
+plotArray(elist=elist, idx=3, data.type="fg", log=FALSE, normalized=FALSE,
+  protoarray.aggregation="min", colpal="topo.colors")
+@  
+\end{center}
+In the exemplary plots shown above there is a relatively strong artifact in the
+background signal that has a slight impact on the foreground signal. In both
+figures an irregular stripe runs from the upper right part of the array to the
+bottom left corner. Although in the background plot this artifact is more
+visible than in the foreground plot the corresponding spatial bias is obvious.    
+
+
+
+For background correction \Biocpkg{limma}'s function
+\Rfunction{backgroundCorrect()} can be used:
+<<backgroundCorrect, results=hide>>=
+library(limma)
+elist <- backgroundCorrect(elist, method="normexp",
+ normexp.method="saddle")
+@
+
+
+
 If the microarrays were manufactured or processed in lots/batches, data analysis
 will suffer from batch effects resulting in wrong results. Hence, the
 elimination of batch effects is a crucial step of data pre-processing. A simple
@@ -157,16 +201,6 @@ elist <- batchFilter(elist=elist, lot1=lot1, lot2=lot2, p.thresh=0.001,
 fold.thresh=3)
 @
 \end{center}
-
-
-
-For background correction \Biocpkg{limma}'s function
-\Rfunction{backgroundCorrect()} can be used:
-<<backgroundCorrect, results=hide>>=
-library(limma)
-elist <- backgroundCorrect(elist, method="normexp",
- normexp.method="saddle")
-@
 
 
 
@@ -227,6 +261,18 @@ elist <- batchAdjust(elist=elist, log=TRUE)
 
 
 
+After pre-processing, the corrected data can be inspected via
+\Rfunction{plotArray()} again. E.g., now the plot of the ProtoArray plotted
+above shows that the revealed spatial bias is less obvious after pre-processing.
+\begin{center}
+<<plotArray3, eval=TRUE, results=hide, fig=TRUE>>=
+plotArray(elist=elist, idx=3, data.type="fg", log=TRUE, normalized=TRUE,
+  protoarray.aggregation="min", colpal="topo.colors")
+@  
+\end{center}
+
+
+
 Since for further analysis also data in original scale will be needed, a copy of
 the \Rclass{EList} object containing unlogged data should be created.
 <<unlog, results=hide>>=
@@ -277,8 +323,8 @@ horizontal dashed lines indicate which p-values are smaller than 0.05 and 0.01.
 If \Rcode{adjust=FALSE}, additionally, the respective Bonferroni significance
 threshold (to show p-values that would be smaller than 0.05 after a possible
 Bonferroni correction) for the given data is indicated by a third dashed line.
-\bioccomment{Note: Bonferroni is not used for the adjustment. The dashed line is
-for better orientation only.} When an output path is defined (via
+Note: Bonferroni is not used for the adjustment. The dashed line is
+for better orientation only. When an output path is defined (via
 \Robject{output.path}) the plot will be saved as a \file{tiff} file. In the next
 code chunk, an example with \Rcode{method="tTest"} is given.
 \begin{center}

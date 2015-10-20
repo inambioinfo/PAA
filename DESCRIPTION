@@ -1,5 +1,5 @@
 Package: PAA
-Version: 1.5.0
+Version: 1.5.1
 Title: PAA (Protein Array Analyzer)
 Authors@R: c(person("Michael", "Turewicz", role=c("aut", "cre"),
 		    email="michael.turewicz@rub.de"),
@@ -8,7 +8,7 @@ Authors@R: c(person("Michael", "Turewicz", role=c("aut", "cre"),
 Author: Michael Turewicz [aut, cre], Martin Eisenacher [ctb, cre]
 Maintainer: Michael Turewicz <michael.turewicz@rub.de>, Martin Eisenacher <martin.eisenacher@rub.de>
 Depends: R (>= 3.2.0), Rcpp (>= 0.11.6)
-Imports: e1071, limma, MASS, mRMRe, randomForest, ROCR, sva
+Imports: e1071, gplots, limma, MASS, mRMRe, randomForest, ROCR, sva
 LinkingTo: Rcpp
 Suggests: BiocStyle, RUnit, BiocGenerics, vsn
 Description: PAA imports single color (protein) microarray data that has been saved in gpr 

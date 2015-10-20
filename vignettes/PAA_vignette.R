@@ -1,4 +1,4 @@
-### R code from vignette source 'C:/R/R-3.2.1/library/PAA_DONT_DELETE/vignettes/PAA_vignette.Rnw'
+### R code from vignette source 'C:/R/R-3.2.2/library/PAA_DONT_DELETE/vignettes/PAA_vignette.Rnw'
 
 ###################################################
 ### code chunk number 1: style
@@ -51,7 +51,29 @@ load(paste(cwd, "/extdata/Alzheimer.RData", sep=""))
 
 
 ###################################################
-### code chunk number 7: batchFilter
+### code chunk number 7: plotArray1
+###################################################
+plotArray(elist=elist, idx=3, data.type="bg", log=FALSE, normalized=FALSE,
+  protoarray.aggregation="min", colpal="topo.colors")
+
+
+###################################################
+### code chunk number 8: plotArray2
+###################################################
+plotArray(elist=elist, idx=3, data.type="fg", log=FALSE, normalized=FALSE,
+  protoarray.aggregation="min", colpal="topo.colors")
+
+
+###################################################
+### code chunk number 9: backgroundCorrect
+###################################################
+library(limma)
+elist <- backgroundCorrect(elist, method="normexp",
+ normexp.method="saddle")
+
+
+###################################################
+### code chunk number 10: batchFilter
 ###################################################
 lot1 <- elist$targets[elist$targets$Batch=='Batch1','ArrayID']
 lot2 <- elist$targets[elist$targets$Batch=='Batch2','ArrayID']
@@ -60,47 +82,46 @@ fold.thresh=3)
 
 
 ###################################################
-### code chunk number 8: backgroundCorrect
-###################################################
-library(limma)
-elist <- backgroundCorrect(elist, method="normexp",
- normexp.method="saddle")
-
-
-###################################################
-### code chunk number 9: plotNormMethods (eval = FALSE)
+### code chunk number 11: plotNormMethods (eval = FALSE)
 ###################################################
 ## plotNormMethods(elist=elist)
 
 
 ###################################################
-### code chunk number 10: plotMAPlots
+### code chunk number 12: plotMAPlots
 ###################################################
 plotMAPlots(elist=elist, idx=10)
 
 
 ###################################################
-### code chunk number 11: normalizeArrays
+### code chunk number 13: normalizeArrays
 ###################################################
 elist <- normalizeArrays(elist=elist, method="cyclicloess",
 cyclicloess.method="fast")
 
 
 ###################################################
-### code chunk number 12: batchAdjust
+### code chunk number 14: batchAdjust
 ###################################################
 elist <- batchAdjust(elist=elist, log=TRUE)
 
 
 ###################################################
-### code chunk number 13: unlog
+### code chunk number 15: plotArray3
+###################################################
+plotArray(elist=elist, idx=3, data.type="fg", log=TRUE, normalized=TRUE,
+  protoarray.aggregation="min", colpal="topo.colors")
+
+
+###################################################
+### code chunk number 16: unlog
 ###################################################
 elist.unlog <- elist
 elist.unlog$E <- 2^(elist$E)
 
 
 ###################################################
-### code chunk number 14: volcanoPlot1
+### code chunk number 17: volcanoPlot1
 ###################################################
 c1 <- paste(rep("AD",20), 1:20, sep="")
 c2 <- paste(rep("NDC",20), 1:20, sep="")
@@ -109,7 +130,7 @@ p.thresh=0.01, fold.thresh=2)
 
 
 ###################################################
-### code chunk number 15: volcanoPlot2 (eval = FALSE)
+### code chunk number 18: volcanoPlot2 (eval = FALSE)
 ###################################################
 ## mMs.matrix1 <- mMs.matrix2 <- mMsMatrix(x=20, y=20)
 ## volcanoPlot(elist=elist.unlog, group1=c1, group2=c2, method="mMs",
@@ -118,13 +139,13 @@ p.thresh=0.01, fold.thresh=2)
 
 
 ###################################################
-### code chunk number 16: pvaluePlot1
+### code chunk number 19: pvaluePlot1
 ###################################################
 pvaluePlot(elist=elist.unlog, group1=c1, group2=c2, method="tTest")
 
 
 ###################################################
-### code chunk number 17: pvaluePlot2 (eval = FALSE)
+### code chunk number 20: pvaluePlot2 (eval = FALSE)
 ###################################################
 ## mMs.matrix1 <- mMs.matrix2 <- mMsMatrix(x=20, y=20)
 ## pvaluePlot(elist=elist.unlog, group1=c1, group2=c2, method="mMs",
@@ -133,13 +154,13 @@ pvaluePlot(elist=elist.unlog, group1=c1, group2=c2, method="tTest")
 
 
 ###################################################
-### code chunk number 18: pvaluePlot3
+### code chunk number 21: pvaluePlot3
 ###################################################
 pvaluePlot(elist=elist.unlog, group1=c1, group2=c2, method="tTest", adjust=TRUE)
 
 
 ###################################################
-### code chunk number 19: pvaluePlot4 (eval = FALSE)
+### code chunk number 22: pvaluePlot4 (eval = FALSE)
 ###################################################
 ## mMs.matrix1 <- mMs.matrix2 <- mMsMatrix(x=20, y=20)
 ## pvaluePlot(elist=elist.unlog, group1=c1, group2=c2, method="mMs",
@@ -148,7 +169,7 @@ pvaluePlot(elist=elist.unlog, group1=c1, group2=c2, method="tTest", adjust=TRUE)
 
 
 ###################################################
-### code chunk number 20: diffAnalysis
+### code chunk number 23: diffAnalysis
 ###################################################
 E <- elist.unlog$E
 rownames(E) <- paste(elist.unlog$genes[,1], elist.unlog$genes[,3],
@@ -164,7 +185,7 @@ print(diff.analysis.results[1:10,])
 
 
 ###################################################
-### code chunk number 21: preselect
+### code chunk number 24: preselect
 ###################################################
 mMs.matrix1 <- mMs.matrix2 <- mMsMatrix(x=20, y=20)
 pre.sel.results <- preselect(elist=elist.unlog, columns1=c1, columns2=c2,
@@ -176,7 +197,7 @@ elist <- elist[-pre.sel.results$discard,]
 
 
 ###################################################
-### code chunk number 22: selectFeatures1 (eval = FALSE)
+### code chunk number 25: selectFeatures1 (eval = FALSE)
 ###################################################
 ## selectFeatures.results <- selectFeatures(elist,n1=20,n2=20,label1="AD",
 ##     label2="NDC",selection.method="rf.rfe",subruns=2,candidate.number=1000,
@@ -184,7 +205,7 @@ elist <- elist[-pre.sel.results$discard,]
 
 
 ###################################################
-### code chunk number 23: selectFeatures2 (eval = FALSE)
+### code chunk number 26: selectFeatures2 (eval = FALSE)
 ###################################################
 ## selectFeatures.results <- selectFeatures(elist,n1=20,n2=20,label1="AD",
 ##     label2="NDC",selection.method="rf.rfe",subsamples=10,bootstraps=10,
@@ -192,7 +213,7 @@ elist <- elist[-pre.sel.results$discard,]
 
 
 ###################################################
-### code chunk number 24: loadSelectFeaturesResults
+### code chunk number 27: loadSelectFeaturesResults
 ###################################################
 # results of frequency-based feature selection:
 load(paste(cwd, "/extdata/selectFeaturesResultsFreq.RData", sep=""))
@@ -201,21 +222,21 @@ load(paste(cwd, "/extdata/selectFeaturesResultsEns.RData", sep=""))
 
 
 ###################################################
-### code chunk number 25: plotFeatures
+### code chunk number 28: plotFeatures
 ###################################################
 plotFeatures(features=selectFeatures.results$features, elist=elist, n1=20,
     n2=20, group1="AD", group2="NDC")
 
 
 ###################################################
-### code chunk number 26: plotFeaturesHeatmap
+### code chunk number 29: plotFeaturesHeatmap
 ###################################################
 plotFeaturesHeatmap(features=selectFeatures.results$features, elist=elist,
     n1=20, n2=20, description=TRUE)
 
 
 ###################################################
-### code chunk number 27: printFeatures
+### code chunk number 30: printFeatures
 ###################################################
 printFeatures(features=selectFeatures.results$features, elist=elist.unlog)[,-2]
 

@@ -25,6 +25,11 @@ Additionally, this dummy data has been saved in the file "DummyData.RData".
 In the files "selectFeaturesResultsEns.RData" and "selectFeaturesResultsFreq.RData" exemplary feature selection results for the Alzheimer's
 disease data (see section 1) are stored.
 
+
+
+4. Low quality ProtoArray example
+In the file "BadData.RData" an exemplary ProtoArray containing a strong spacial bias is available and may be used to test the function "plotArray()".
+
 			*****************
 			*DATA INFO - END*
 			*****************
