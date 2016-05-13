@@ -1,15 +1,22 @@
 citHeader("To cite package 'PAA' in publications use:")
 
-year <- sub(".*(2[[:digit:]]{3})-.*", "\\1", meta$Date, perl = TRUE)
-vers <- paste("R package version", meta$Version)
-
-citEntry(entry = "manual",
-         title = "ProteinArrayAnalyzer (PAA): A Novel R/Bioconductor Package for Autoimmune Biomarker Discovery with Protein Microarrays",
-         author = personList(as.person("Michael Turewicz")),
-         year = year,
-         note = vers,
-         textVersion =
-         paste0("Mchael Turewicz (", year,
-                "). ProteinArrayAnalyzer (PAA): A Novel R/Bioconductor Package for ",
-                "Autoimmune Biomarker Discovery with Protein Microarrays",
-                vers, "."))
+citEntry(
+ entry="Article",
+ title= "PAA: An R/Bioconductor package for biomarker discovery with protein microarrays",
+ author=personList(as.person("Michael Turewicz"),
+        as.person("Maike Ahrens"),
+        as.person("Caroline May"),
+        as.person("Katrin Marcus"),
+        as.person("Martin Eisenacher")),
+ year="2016",
+ journal="Bioinformatics",
+ volume= "32",
+ number="10",
+ pages="1577-1579",
+ doi = "10.1093/bioinformatics/btw037",
+ url = "http://bioinformatics.oxfordjournals.org/content/early/2016/02/17/bioinformatics.btw037",
+ textVersion=paste0("Turewicz M, Ahrens M, May C, Marcus K, Eisenacher M. PAA: An R/Bioconductor ",
+                    "package for biomarker discovery with protein microarrays. ",
+                    "Bioinformatics (2016) 32 (10): 1577-1579. ",
+                    "doi:10.1093/bioinformatics/btw037, PubMed PMID: 26803161.")
+)

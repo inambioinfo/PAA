@@ -1,6 +1,50 @@
 RELEASE HISTORY OF THE "PAA" PACKAGE
 ===========================================
 
+CHANGES IN PAA VERSION 1.7.1 [2016-05-13]:
+-----------------------------------------------
+GENERAL
+* Built with the latest R version (R-3.2.4 Revised).
+* Built with the latest Rtools version (Rtools 3.3).
+* Update of the PAA citation: PAA applications note, Turewicz et al.,
+  Bioinformatics, 2016, PMID: 26803161, added to the CITATION
+  file.
+* Update of the URL in the DESCTIPTION file.
+* Correction of some typos in the documentation.
+* Update of the vignette to demonstrate the new features.
+
+NEW FEATURES
+* New function: batchFilter.anova() for multi-batch scenarios.
+* New function: plotFeaturesHeatmap.2() as an alternative to
+  plotFeaturesHeatmap().
+* New arguments for loadGPR(): "description", "description.features"
+  and "description.discard" for data import when gpr files don't
+  provide the column "Description". Furthermore, new dummy data
+  has been added to the package in order to demonstrate this
+  new feature.
+* Now the customized object classes EListRaw and EList contain the
+  new component "array.type" added by loadGPR when the data is
+  imported.
+
+IMPROVEMENTS
+* Additional and more informative error messages added.
+* The function plotArray() is more flexible. Now, not only
+  ProtoArrays can be plotted. Moreover, now the plot can be saved
+  also as png file.
+
+
+MODIFICATIONS
+* The loadGPR() and plotArray()-argument "protoarray.aggregation" has
+  been renamed to "aggregation" and the default value has been
+  changed to "none".
+* The loadGPR() argument "array.type" is mandatory now.
+
+BUG FIXES
+* Plots created during rlm normalization by normalizeArrays() were in
+  logE scale and not in log2 scale. This has been fixed.
+* Correction of regular expressions for rlm normalization in
+  normalizeArrays() and for data import in loadGPR().
+
 CHANGES IN PAA VERSION 1.5.1 [2015-10-20]:
 -----------------------------------------------
 GENERAL
@@ -10,7 +54,7 @@ NEW FEATURES
 * The new function plotArray() is available. It can be used for visual inspection of
   ProtoArrays as well as for the monitoring of the impact of any pre-processing method
   applied to the data. In order to support the plotting of ProtoArrays before duplicate
-  aggregation and mimic the original scan image of ProtoArrays, now loadGPR() supports
+  aggregation and to mimic the original scan image of ProtoArrays, now loadGPR() supports
   the option protoarray.aggregation="none". Finally, the vignette has been updated in
   order to describe the new function via an exemplary ProtoArray showing a spatial bias.
 
@@ -48,7 +92,7 @@ CHANGES IN PAA VERSION 1.3.2 [2015-06-22]:
 -----------------------------------------------
 GENERAL
 * Update to the latest R version which has been released a few days ago (2015-06-18).
-* Built with R-3.2.1 
+* Built with R-3.2.1
 
 NEW FEATURES
 * No changes.

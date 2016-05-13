@@ -19,7 +19,7 @@ them).
 
 \usage{
 preselect(elist=NULL, columns1=NULL, columns2=NULL, label1="A", label2="B",
- discard.threshold=0.5, fold.thresh=1.5, discard.features=TRUE,
+ log=NULL, discard.threshold=0.5, fold.thresh=1.5, discard.features=TRUE,
  mMs.above=1500, mMs.between=400, mMs.matrix1=NULL,
  mMs.matrix2=NULL, method=NULL)
 }
@@ -32,6 +32,8 @@ preselect(elist=NULL, columns1=NULL, columns2=NULL, label1="A", label2="B",
   \item{columns2}{ column name vector (string vector) of group 2 (mandatory). }
   \item{label1}{ class label of group 1.}
   \item{label2}{ class label of group 2.}
+  \item{log}{ indicates whether the data is in log scale (mandatory; note: if
+  TRUE log2 scale is expected). }
   \item{discard.threshold}{ positive numeric between 0 and 1 indicating the
   maximum mMs or, respectively, the maximum t-test p-value for features to be
   included for further analysis. Default is \code{"0.5"}. }
@@ -39,13 +41,13 @@ preselect(elist=NULL, columns1=NULL, columns2=NULL, label1="A", label2="B",
   features to be included for further analysis. Default is \code{"1.5"}. }
   \item{discard.features}{ boolean indicating whether merely feature scores
   (i.e., mMs or t-test p-values) (=\code{"FALSE"}) or feature scores and a
-  discard list \code{"TRUE"} should be returned. Default is \code{"FALSE"}. }
+  discard list (=\code{"TRUE"}) should be returned. Default is \code{"TRUE"}. }
   \item{mMs.above}{ mMs above parameter (integer). Default is \code{"1500"}. }
   \item{mMs.between}{ mMs between parameter (integer). Default is
   \code{"400"}. }
-  \item{mMs.matrix1}{ pre-computed mMs reference matrix (see \code{mMsMatrix()})
+  \item{mMs.matrix1}{ precomputed mMs reference matrix (see \code{mMsMatrix()})
   for group 1 (mandatory). }
-  \item{mMs.matrix2}{ pre-computed mMs reference matrix (see \code{mMsMatrix()})
+  \item{mMs.matrix2}{ precomputed mMs reference matrix (see \code{mMsMatrix()})
   for group 2 (mandatory). }
   \item{method}{preselection method ( \code{"mMs"}, \code{"tTest"},
   \code{"mrmr"}). Default is \code{"mMs"}. }
@@ -59,7 +61,7 @@ column vectors. Furthermore, the class labels of group 1 and group 2 are needed.
 If \code{discard.features} is \code{"TRUE"} (default), all features that are
 considered as not differential will be collected and returned for discarding.
 
-If \code{method = "mMs"}, additionally pre-computed mMs reference matrices (see
+If \code{method = "mMs"}, additionally precomputed mMs reference matrices (see
 \code{mMsMatrix()}) for group 1 and group 2 will be needed to compute mMs values
 (see Love B.) as scoring method. All mMs parameters (\code{mMs.above} and
 \code{mMs.between}) can be set. The defaults are \code{"1500"} for
@@ -100,7 +102,7 @@ Love B: The Analysis of Protein Arrays. In: Functional Protein Microarrays in
 Drug Discovery. CRC Press; 2007: 381-402.
 
 The software \code{"Prospector"} for ProtoArray analysis can be downloaded from
-Life Technologies web site (\url{http://www.lifetechnologies.com/}).
+the Thermo Fisher Scientific web page (\url{https://www.thermofisher.com}).
 
 The R package mRMRe can be downloaded from CRAN.
 See also: De Jay N, Papillon-Cavanagh S, Olsen C, El-Hachem N, Bontempi G,
@@ -108,7 +110,7 @@ Haibe-Kains B. mRMRe: an R package for parallelized mRMR ensemble feature
 selection. Bioinformatics 2013.
 
 The package \code{limma} by Gordon Smyth et al. can be downloaded from
-Bioconductor (\url{http://www.bioconductor.org/}).
+Bioconductor (\url{https://www.bioconductor.org}).
 
 Smyth, G. K. (2005). Limma: linear models for microarray data. In:
 Bioinformatics and Computational Biology Solutions using R and Bioconductor,
@@ -130,7 +132,7 @@ load(paste(cwd, "/extdata/Alzheimer.RData", sep=""))
 elist <- elist[elist$genes$Block < 10,]
 c1 <- paste(rep("AD",20), 1:20, sep="")
 c2 <- paste(rep("NDC",20), 1:20, sep="")
-preselect(elist, columns1=c1, columns2=c2, label1="AD", label2="NDC",
+preselect(elist, columns1=c1, columns2=c2, label1="AD", label2="NDC", log=FALSE,
  discard.threshold=0.5, fold.thresh=1.5, discard.features=TRUE, method="tTest")
 }
 

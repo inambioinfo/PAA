@@ -19,9 +19,9 @@ selection (based on RF-RFE, RJ-RFE or SVM-RFE) or ensemble feature selection
 
 \usage{
 selectFeatures(elist = NULL, n1 = NULL, n2 = NULL, label1 = "A", label2 = "B",
- cutoff = 10, selection.method = "rf.rfe", preselection.method = "mMs",
- subruns = 100, k = 10, subsamples = 10, bootstraps = 10,
- candidate.number = 300, above=1500, between=400,
+ log=NULL, cutoff = 10, selection.method = "rf.rfe",
+ preselection.method = "mMs", subruns = 100, k = 10, subsamples = 10,
+ bootstraps = 10, candidate.number = 300, above=1500, between=400,
  panel.selection.criterion="accuracy", importance.measure="MDA", ntree = 500,
  mtry = NULL, plot = FALSE, output.path = NULL, verbose = FALSE,
  method = "frequency")
@@ -36,52 +36,62 @@ selectFeatures(elist = NULL, n1 = NULL, n2 = NULL, label1 = "A", label2 = "B",
   \item{n2}{ integer indicating the sample number in group 2 (mandatory). }
   \item{label1}{ class label of group 1 (default: "A"). }
   \item{label2}{ class label of group 2 (default: "B"). }
+  \item{log}{ indicates whether the data is in log scale (mandatory; note: if
+  TRUE log2 scale is expected). }
   \item{cutoff}{ integer indicating how many features will be selected
-  (default: 10). }
+    (default: 10). }
   \item{selection.method}{ string indicating the feature selection method:
-  \code{"rf.rfe"} (default), \code{"svm.rfe"} or \code{"rj.rfe"}. }
-  \item{preselection.method}{ string indicating the feature pre-selection
-  method: \code{"mMs"} (default), \code{"tTest"}, \code{"mrmr"} or
-  \code{"none"}. }
-  \item{subruns}{ integer indicating the number of re-sampling repeats to be
-  performed (default: 100). }
+    \code{"rf.rfe"} (default), \code{"svm.rfe"} or \code{"rj.rfe"}. Has no
+    effect when \code{method="ensemble"}. }
+  \item{preselection.method}{ string indicating the feature preselection
+    method: \code{"mMs"} (default), \code{"tTest"}, \code{"mrmr"} or
+    \code{"none"}. Has no effect when \code{method="ensemble"}. }
+  \item{subruns}{ integer indicating the number of resampling repeats to be
+    performed (default: 100). Has no effect when \code{method="ensemble"}. }
   \item{k}{ integer indicating the number of k-fold cross validation subsets
-  (default: 10, i.e., 10-fold CV). }
+    (default: 10, i.e., 10-fold CV). }
   \item{subsamples}{ integer indicating the number of subsamples for ensemble
-  feature selection (default: 10). }
+    feature selection (default: 10). Has no effect when
+    \code{method="frequency"}. }
   \item{bootstraps}{ integer indicating the number of bootstrap samples for
-  ensemble feature selection (default: 10). }
-  \item{candidate.number}{ integer indicating how many features shall be pre-
-  selected. Default is \code{"300"}. }
-  \item{above}{ mMs above parameter (integer). Default is \code{"1500"}. }
-  \item{between}{ mMs between parameter (integer). Default is \code{"400"}. }
-  \item{panel.selection.criterion}{ string indicating the panel selection
-  criterion: \code{"accuracy"} (default), \code{"sensitivity"}\cr or
-  \code{"specificity"}. }
+    ensemble feature selection (default: 10). Has no effect when
+    \code{method="frequency"} only. }
+  \item{candidate.number}{ integer indicating how many features shall be
+    preselected. Default is \code{"300"}. Has no effect when
+    \code{method="ensemble"}. }
+  \item{above}{ mMs above parameter (integer). Default is \code{"1500"}. There
+    will be no effect when \code{method="ensemble"}. }
+  \item{between}{ mMs between parameter (integer). Default is \code{"400"}.
+    There will be no effect when \code{method="ensemble"}. }
+  \item{panel.selection.criterion}{ indicating the panel selection
+    criterion: \code{"accuracy"} (default), \code{"sensitivity"}\cr or
+    \code{"specificity"}. No effect for \code{method="ensemble"}. }
   \item{importance.measure}{ string indicating the random forest importance
-  measure: \code{"MDA"} (default) or \code{"MDG"}. }
-  \item{ntree}{ random forest parameter ntree (default: \code{"500"}). }
+    measure: \code{"MDA"} (default) or \code{"MDG"}. Has no effect when
+    \code{method="ensemble"}. }
+  \item{ntree}{ random forest parameter ntree (default: \code{"500"}). There
+    will be no effect when \code{method="ensemble"}. }
   \item{mtry}{ random forest parameter mtry (default: \code{sqrt(p)} where p
-  is the number of predictors). }
-  \item{plot}{ indicates whether performance plots shall be plotted
+    is the number of predictors). Has no effect when \code{method="ensemble"}. }
+  \item{plot}{ logical indicating whether performance plots shall be plotted
   (default: FALSE). }
   \item{output.path}{ string indicating the results output folder (optional). }
-  \item{verbose}{ logical, indicating whether additional information shall be
+  \item{verbose}{ logical indicating whether additional information shall be
   printed to the console (default: FALSE). }
   \item{method}{ the feature selection method: "frequency" (default) for
-  frequency-based and "ensemble" for ensemble feature selection. }
+  frequency-based or "ensemble" for ensemble feature selection. }
 }
 
 
 
 \details{
 This function takes an \code{EListRaw} or \code{EList} object, group-specific
-sample numbers, group labels and parameters choosing and setting up a univariate
-feature pre-selection method as well as a multivariate feature selection method
-(frequency-based or ensemble feature selection) to select a panel of
-differential features. When an output path is defined (via \code{output.path})
-results will be saved on the hard disk and when \code{verbose} is TRUE
-additional information will be printed to the console.
+sample numbers, group labels and parameters choosing and configuring a
+multivariate feature selection method (frequency-based or ensemble feature
+selection) to select a panel of differential features. When an output path is
+defined (via \code{output.path}) results will be saved on the hard disk and
+when \code{verbose} is TRUE additional information will be printed to the
+console.
 
 Frequency-based feature selection (\code{method="frequency"}): The whole data is
 splitted in k cross validation training and test set pairs. For each training
@@ -93,10 +103,10 @@ cross validation classification accuracy as well as the selected feature panel
 feature selection methods random forest recursive feature elimination (RF-RFE),
 random jungle recursive feature elimination (RJ-RFE) and support vector machine
 recursive feature elimination (SVM-RFE) are supported. To reduce running times,
-optionally, univariate feature pre-selection can be performed (usage via
-\code{preselection.method}). As univariate pre-selection methods mMs
-\code{"mMs"}, Student's t-test \code{"tTest"} and mRMR \code{"mrmr"} are
-supported. Alternatively, no pre-selection can be chosen \code{"none"}. This
+optionally, univariate feature preselection can be performed (control via
+\code{preselection.method}). As univariate preselection methods mMs
+(\code{"mMs"}), Student's t-test (\code{"tTest"}) and mRMR (\code{"mrmr"}) are
+supported. Alternatively, no preselection can be chosen (\code{"none"}). This
 approach is similar to the method proposed in Baek et al.
 
 Ensemble feature selection (\code{method="ensemble"}): From the whole data the
@@ -112,8 +122,7 @@ accuracy is determined. Finally, the stability of the subsample-specific panels
 is assessed (via Kuncheva index, Kuncheva LI, 2007), all subsample-specific
 rankings are aggregated, the top n features (defined by \code{cutoff}) are
 selected, the average classification accuracy is computed, and all these results
-are returned in a list. This approach has been proposed and is described in
-Abeel et al.        
+are returned in a list. This approach has been proposed in Abeel et al.        
 }
 
 
@@ -170,13 +179,13 @@ c1 <- paste(rep("AD",20), 1:20, sep="")
 c2 <- paste(rep("NDC",20), 1:20, sep="")
 
 pre.sel.results <- preselect(elist=elist, columns1=c1, columns2=c2, label1="AD",
- label2="NDC", discard.threshold=0.1, fold.thresh=1.9, discard.features=TRUE,
- method="tTest")
+ label2="NDC", log=FALSE, discard.threshold=0.1, fold.thresh=1.9,
+ discard.features=TRUE, method="tTest")
 elist <- elist[-pre.sel.results$discard,]
 
-selectFeatures.results <- selectFeatures(elist,n1=20,n2=20,label1="AD",
-    label2="NDC",selection.method="svm.rfe",subsamples=2,bootstraps=1,
-    candidate.number=20,method="ensemble")
+selectFeatures.results <- selectFeatures(elist, n1=20, n2=20, label1="AD",
+    label2="NDC", log=FALSE, subsamples=2, bootstraps=1, candidate.number=20,
+    method="ensemble")
 }
 
 

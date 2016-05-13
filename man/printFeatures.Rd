@@ -4,13 +4,14 @@
 
 
 \title{
-Print biomarker candidate panel into a table. 
+Print features into a table. 
 }
 
 
 
 \description{
-Creates a table containing the selected biomarker candidate panel.  
+Creates a table containing the given features (e.g., the selected biomarker
+candidate panel).  
 }
 
 
@@ -22,10 +23,9 @@ printFeatures(features = NULL, elist = NULL, output.path = NULL)
 
 
 \arguments{
-  \item{features}{ vector containing the selected features as \code{"BRC"}-IDs
-  (mandatory). }
+  \item{features}{ vector containing \code{"BRC"}-IDs (mandatory). }
   \item{elist}{ \code{EListRaw} or \code{EList} object containing all intensity
-  data in log scale (mandatory). }
+  data (mandatory). }
   \item{output.path}{ string indicating the folder where the table will be saved
   as a txt file (optional).}
 }
@@ -33,15 +33,15 @@ printFeatures(features = NULL, elist = NULL, output.path = NULL)
 
 
 \details{
-Creates a table containing the selected biomarker candidate panel as well as
-additional information. When \code{output.path} is defined this table will be
-saved in a txt file (\code{"candidates.txt"}).
+Creates a table containing the given features (e.g., the selected biomarker
+candidate panel) as well as additional information. When \code{output.path} is
+defined this table will be saved in a txt file (\code{"candidates.txt"}).
 }
 
 
 
 \value{
-Table containing the selected biomarker panel.
+Table containing the given features.
 }
 
 

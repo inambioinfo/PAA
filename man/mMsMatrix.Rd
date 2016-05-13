@@ -31,15 +31,15 @@ mMsMatrix(x, y)
 
 
 \details{
-For feature pre-selection the "minimum M Statistic" (mMs) proposed by Love B. is
-used. The mMs is a univariate measure that is sensitive to population subgroups. 
-To avoid redundant mMs computations for a large number of features (e.g.,
-ca. 9500 features on ProtoArray v5) a reference matrix containing all relevant
-mMs values can be pre-computed. Therefore, only two parameters are needed: the
-number of samples in group 1 (\code{n1}) and the number of samples in group 2
-(\code{n2}). According to mMs definition for each matrix element (i,m) a mMs
-value (= the probability of) for having m values in group 1 larger than the i-th
-largest value in group 2 is computed.  
+For feature preselection the "minimum M Statistic" (mMs) proposed by Love B. can
+be used. The mMs is a univariate measure that is sensitive to population
+subgroups. To avoid redundant mMs computations for a large number of features
+(e.g., ca. 9500 features on ProtoArray v5) a reference matrix containing all
+relevant mMs values can be precomputed. For this purpose, only two parameters
+are needed: the number of samples in group 1 (\code{n1}) and the number of
+samples in group 2 (\code{n2}). According to mMs definition for each matrix
+element (i,m) a mMs value (= the probability of) for having m values in group 1
+larger than the i-th largest value in group 2 is computed.  
 }
 
 
@@ -67,7 +67,7 @@ Michael Turewicz, \email{michael.turewicz@rub.de}
 To check whether a feature is more prevalent in group 1 or in group 2, PAA needs
 both the mMs for having m  values in group 1 larger than the i-th largest
 element in group 2 as well as the mMs for having m values in group 2 larger than
-the i-th largest element in group 1. Hence, always both needs be computed
+the i-th largest element in group 1. Hence, always both must be computed:
 \code{mMsMatrix(n1,n2)} and  \code{mMsMatrix(n2,n1)}.  
 }
 

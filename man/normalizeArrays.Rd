@@ -11,7 +11,7 @@ Normalize microarray data.
 
 \description{
 Normalizes \code{EListRaw} data and returns an \code{EList} object containing
-normalized data in log scale.
+normalized data in log2 scale.
 }
 
 
@@ -27,8 +27,8 @@ controls="internal", group1 = NULL, group2 = NULL, output.path=NULL)
   \item{elist}{ \code{EListRaw} object containing raw data to be normalized
   (mandatory).}
   \item{method}{ string indicating the normalization method
-  (\code{"cyclicloess"}, \code{"quantile"} or \code{"vsn"}) to be used
-  (mandatory).}
+  (\code{"cyclicloess"}, \code{"quantile"}, \code{"vsn"} or \code{"rlm"}) to be
+  used (mandatory).}
   \item{cyclicloess.method}{ string indicating which type of cyclicloess
   normalization (\code{"pairs"}, \code{"fast"}, \code{"affy"}) should be
   performed (optional).}
@@ -40,7 +40,7 @@ controls="internal", group1 = NULL, group2 = NULL, output.path=NULL)
   samples (optional).}
   \item{group2}{ vector of integers (column indices) indicating all group 2
   samples (optional).}
-  \item{output.path}{ output.path for ProtoArray RLM normalization (optional).}
+  \item{output.path}{ output.path for ProtoArray rlm normalization (optional).}
 }
 
 
@@ -60,12 +60,12 @@ for normalization. Valid options are \code{"internal"} (default),
 \code{"external"} and \code{"both"} which refer to the following sets of
 ProtoArray controls:
 \itemize{
-    \item{internal}{ The set of all internal controls spotted on the ProtoArray.
+    \item{internal:}{ The set of all internal controls spotted on the ProtoArray.
     The human-IgG series and anti-human-IgG series, which respond to serum and
     secondary antibodies. }
-    \item{external}{ The V5-CMK1 series spotted on the ProtoArray which responds
+    \item{external:}{ The V5-CMK1 series spotted on the ProtoArray which responds
     to exogenously added anti-V5 antibody (external control). }
-    \item{both}{ The combined set of both the internal and the external
+    \item{both:}{ The combined set of both the internal and the external
     controls (i.e., the human-IgG and anti-human-IgG series and the V5-CMK1
     series). }
 }
@@ -90,7 +90,7 @@ expressions are given:
 
 
 \value{
-An EList object with the normalized data in log scale is returned.
+An EList object with the normalized data in log2 scale is returned.
 }
 
 
@@ -117,13 +117,6 @@ Michael Turewicz, \email{michael.turewicz@rub.de}
 
 
 
-\note{
-Groupwise normalization will be performed when the arguments \code{group1} AND
-\code{group2} are assigned. 
-}
-
-
-
 \examples{
 cwd <- system.file(package="PAA")
 load(paste(cwd, "/extdata/Alzheimer.RData", sep=""))
@@ -133,4 +126,4 @@ normalized.elist <- normalizeArrays(elist=elist, method="quantile")
 
 
 
-\keyword{ Pre-processing }
+\keyword{ Preprocessing }

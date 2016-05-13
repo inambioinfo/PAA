@@ -24,8 +24,8 @@ batchAdjust(elist=NULL, log=NULL)
 \arguments{
   \item{elist}{\code{EList} or \code{EListRaw} object containing the data to be
   adjusted (mandatory).}
-  \item{log}{string (\code{"TRUE"} or \code{"FALSE"}) indicating whether the
-  data is in log scale (mandatory).}
+  \item{log}{logical indicating whether the data is in log scale (mandatory;
+  note: if TRUE log2 scale is expected).}
 }
 
 
@@ -80,4 +80,4 @@ elist <- batchAdjust(elist=elist, log=FALSE)
 
 
 
-\keyword{ Pre-processing }
+\keyword{ Preprocessing }

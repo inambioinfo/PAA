@@ -2,7 +2,8 @@ test_loadGPR <- function() {
     gpr <- system.file("extdata", package="PAA")
     targets <- list.files(system.file("extdata", package="PAA"),
      pattern = "dummy_targets", full.names=TRUE)
-    test.elist <- loadGPR(gpr.path=gpr, targets.path=targets)
+    test.elist <- loadGPR(gpr.path=gpr, targets.path=targets,
+     array.type="ProtoArray")
 
 
 
