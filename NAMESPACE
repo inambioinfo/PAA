@@ -1,6 +1,6 @@
 useDynLib(PAA, .registration = TRUE)
 
-export(batchAdjust, batchFilter, diffAnalysis, loadGPR, mMsMatrix, normalizeArrays, plotArray, plotFeatures, plotFeaturesHeatmap, plotMAPlots, plotNormMethods, preselect, printFeatures, pvaluePlot, selectFeatures, shuffleData, volcanoPlot)
+export(batchAdjust, batchFilter, batchFilter.anova, diffAnalysis, loadGPR, mMsMatrix, normalizeArrays, plotArray, plotFeatures, plotFeaturesHeatmap, plotFeaturesHeatmap.2, plotMAPlots, plotNormMethods, preselect, printFeatures, pvaluePlot, selectFeatures, shuffleData, volcanoPlot)
 
 import(Rcpp)
 
@@ -12,4 +12,5 @@ importFrom(randomForest, randomForest)
 importFrom(ROCR, performance, prediction)
 importFrom(sva, ComBat)
 importFrom(limma, normalizeBetweenArrays, normalizeVSN, read.maimages, readTargets)
-importFrom(gplots, heatmap.2)
+importFrom(gplots, colorpanel, heatmap.2)
+importFrom(gtools, invalid)

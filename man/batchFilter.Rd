@@ -16,8 +16,8 @@ Finds differential features regarding array batches/lots and removes them.
 
 
 \usage{
-batchFilter(elist=NULL, lot1=NULL, lot2=NULL, p.thresh=0.05, fold.thresh=1.5,
-output.path=NULL)
+batchFilter(elist=NULL, lot1=NULL, lot2=NULL, log=NULL, p.thresh=0.05,
+fold.thresh=1.5, output.path=NULL)
 }
 
 
@@ -26,6 +26,8 @@ output.path=NULL)
   \item{elist}{\code{EList} or \code{EListRaw} object (mandatory).}
   \item{lot1}{vector of column names for group 1 (mandatory).}
   \item{lot2}{vector of column names for group 2 (mandatory).}
+  \item{log}{ logical indicating whether the data is in log scale (mandatory;
+  note: if TRUE log2 scale is expected). }
   \item{p.thresh}{positive float number between 0 and 1 indicating the maximum
   Student's t-test p-value for features to be considered as differential (e.g.,
   \code{"0.5"}).}
@@ -68,10 +70,10 @@ load(paste(cwd, "/extdata/Alzheimer.RData", sep=""))
 elist <- elist[elist$genes$Block < 10,]
 lot1 <- elist$targets[elist$targets$Batch=='Batch1','ArrayID']
 lot2 <- elist$targets[elist$targets$Batch=='Batch2','ArrayID']
-elist <- batchFilter(elist=elist, lot1=lot1, lot2=lot2, p.thresh=0.001,
-  fold.thresh=3)
+elist <- batchFilter(elist=elist, lot1=lot1, lot2=lot2, log=FALSE,
+  p.thresh=0.001, fold.thresh=3)
 }
 
 
 
-\keyword{ Pre-processing }
+\keyword{ Preprocessing }

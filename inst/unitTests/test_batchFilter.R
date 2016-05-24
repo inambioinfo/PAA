@@ -5,7 +5,7 @@ test_batchFilter <- function() {
     lot1 <- elist$targets[elist$targets$Batch=='Batch1','ArrayID']
     lot2 <- elist$targets[elist$targets$Batch=='Batch2','ArrayID']
     elist <- elist[1:100,]
-    test.elist <- batchFilter(elist=elist, lot1=lot1, lot2=lot2,
+    test.elist <- batchFilter(elist=elist, lot1=lot1, lot2=lot2, log=FALSE,
      p.thresh=0.001, fold.thresh=3)
 
 

@@ -1,0 +1,3 @@
+Date	Array	FileName	SerumID	ArrayID	Group	Batch
+10.11.2010	41992	dummy_GSM734833_PA41992_-_AD1_no_descr.gpr	AD1	AD1	AD	Batch1
+24.11.2010	42023	dummy_GSM735203_PA42023_-_CO13_no_descr.gpr	NDC1	NDC1	NDC	Batch2

@@ -4,13 +4,13 @@
 
 
 \title{
-Plot intensities of selected features.
+Plot intensities of features.
 }
 
 
 
 \description{
-Plots intensities of all selected features (one sub-plot per feature) in group-
+Plots intensities of all given features (one sub-plot per feature) in group-
 specific colors.  
 }
 
@@ -24,10 +24,9 @@ plotFeatures(features = NULL, elist = NULL, n1 = NULL, n2 = NULL,
 
 
 \arguments{
-  \item{features}{vector containing the selected features as \code{"BRC"}-IDs
-  (mandatory).}
+  \item{features}{vector containing \code{"BRC"}-IDs (mandatory).}
   \item{elist}{\code{EListRaw} or \code{EList} object containing all intensity
-  data in log scale (mandatory).}
+  data in log2 scale (mandatory).}
   \item{n1}{integer indicating the sample size of group 1 (mandatory).}
   \item{n2}{integer indicating the sample size of group 2 (mandatory).}
   \item{group1}{class label of group 1.}
@@ -39,11 +38,12 @@ plotFeatures(features = NULL, elist = NULL, n1 = NULL, n2 = NULL,
 
 
 \details{
-Plots intensities of all features selected by the function
-\code{selectFeatures()} (one sub-plot per feature) in group-specific colors. All
-sub-plots are aggregated to one figure. When \code{output.path} is not NULL this
-figure will be saved in a tiff file in \code{output.path}. This function can be
-used to check whether the selected features are differential.
+Plots intensities of given features (e.g., selected by the function
+\code{selectFeatures()}) in group-specific colors (one sub-plot per feature).
+All sub-plots are aggregated to one figure. When the argument
+\code{output.path} is not NULL this figure will be saved in a tiff file in
+\code{output.path}. This function can be used to check whether the selected
+features are differential.
 }
 
 

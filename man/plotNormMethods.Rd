@@ -10,8 +10,8 @@ Check normalization results with boxplots.
 
 
 \description{
-Draws boxplots (one boxplot per sample) of raw data and data after all kinds of
-normalization provided by PAA.  
+Draws sample-wise boxplots of raw data and data after all kinds of normalization
+provided by PAA.  
 }
 
 
@@ -25,9 +25,9 @@ output.path = NULL)
 
 \arguments{
   \item{elist}{ \code{EListRaw} object containing raw data (mandatory).}
-  \item{include.rlm}{ boolean indicating whether RLM normalization should be
+  \item{include.rlm}{ logical indicating whether RLM normalization should be
   included (for ProtoArrays only, deafault: FALSE).}
-  \item{controls}{ sring indicating the ProtoArray controls for \code{rlm}
+  \item{controls}{ string indicating the ProtoArray controls for \code{rlm}
   normalization (optional). Valid options are \code{"internal"} (default),
   \code{"external"}, \code{"both"} or a regular expression defining a specific
   control or a specific set of controls.}
@@ -67,4 +67,4 @@ plotNormMethods(elist=elist)
 
 
 
-\keyword{ Pre-processing }
+\keyword{ Preprocessing }

@@ -28,9 +28,9 @@ output.path = NULL)
   \item{idx}{ integer indicating the column index of the sample for drawing MA
   plots or the string 'all' for drawing MA plots for all samples
   (default: all).}
-  \item{include.rlm}{ boolean indicating whether RLM normalization should be
-  included (for ProtoArrays only, deafault: FALSE).}
-  \item{controls}{ sring indicating the ProtoArray controls for \code{rlm}
+  \item{include.rlm}{ logical indicating whether RLM normalization should be
+  included (for ProtoArrays only; deafault: FALSE).}
+  \item{controls}{ string indicating the ProtoArray controls for \code{rlm}
   normalization (optional). Valid options are \code{"internal"} (default),
   \code{"external"}, \code{"both"} or a regular expression defining a specific
   control or a specific set of controls.}
@@ -75,4 +75,4 @@ plotMAPlots(elist=elist, idx=1)
 
 
 
-\keyword{ Pre-processing }
+\keyword{ Preprocessing }

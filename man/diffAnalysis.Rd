@@ -25,16 +25,17 @@ between=400, features=NULL, feature.names=NULL)
 
 \arguments{
   \item{input}{ \code{EList$E}- or \code{EListRaw$E}-matrix extended by row
-  names comprising BRC-IDs of the corresponding features (mandatory). }
+  names comprising BRC-IDs of the corresponding features (mandatory; note: it is
+  expected that this matrix is in original scale and not in log2 scale). }
   \item{label1}{ vector of column names for group 1 (mandatory). }
   \item{label2}{ vector of column names for group 2 (mandatory). }
   \item{class1}{ label of group 1 (mandatory). }
   \item{class2}{ label of group 2 (mandatory). }
   \item{output.path}{ string indicating a path for saving the results
   (optionally). }
-  \item{mMs.matrix1}{ pre-computed mMs reference matrix (see \code{mMsMatrix()})
+  \item{mMs.matrix1}{ precomputed mMs reference matrix (see \code{mMsMatrix()})
   for group 1 (mandatory). }
-  \item{mMs.matrix2}{ pre-computed mMs reference matrix (see \code{mMsMatrix()})
+  \item{mMs.matrix2}{ precomputed mMs reference matrix (see \code{mMsMatrix()})
   for group 2 (mandatory). }
   \item{above}{ mMs above parameter (integer). Default is \code{"1500"}. }
   \item{between}{ mMs between parameter (integer). Default is \code{"400"}. }

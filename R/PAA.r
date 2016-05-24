@@ -886,7 +886,7 @@ tTest <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
 
         mean1 <- mean(elist$E[zeile,1:n1])
         mean2 <- mean(elist$E[zeile,(n1+1):col.number])
-        fold <- mean1 / mean2
+        fold <- 2^(mean1 - mean2) # --> data must be in log2 scale!
         #if(round(p,1) < round(discard.threshold,1)) {   
         #---> ISSUE: there  may be no exact representation for floats!!!
         if(p < discard.threshold && 
@@ -949,8 +949,9 @@ mrmr <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
       paste(elist$genes$Block,elist$genes$Row,elist$genes$Column) 
     mean1 <- apply(elist$E[,columns1], 1, mean)
     mean2 <- apply(elist$E[,columns2], 1, mean)
+    fold <- 2^(mean1 - mean2) # --> data must be in log2 scale!
     output.matrix <- cbind(idx.tmp, elist$genes$Description, elist$genes$Name,
-      elist$genes$ID, mrmr.scores, mean1, mean2, (mean1 / mean2), elist$E)
+      elist$genes$ID, mrmr.scores, mean1, mean2, fold, elist$E)
 
     output.matrix <- data.frame(output.matrix)
     colnames(output.matrix) <- c("BRC", "Description", "Name", "ID", "Score",
@@ -1024,209 +1025,209 @@ mrmrFS <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
 }
 #+++++++++++++++++++++++++++ mrmrFS +++++++++++++++++++++++++++++++++++++++
 
-#+++++++++++++++++++++++++++ mMsFS +++++++++++++++++++++++++++++++++++++++
-mMsFS <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
-  label2="B", above=1500, between=400, mMs.matrix1=NULL, mMs.matrix2=NULL){
-    
-    if(is.null(elist) || is.null(columns1) || is.null(columns2) ||
-      is.null(mMs.matrix1) || is.null(mMs.matrix2)) {
-        stop("ERROR: Not all mandatory arguments have been defined!")
-    }
-    
-    row.number <- nrow(elist$E)
-    n1 <- length(columns1)
-    n2 <- length(columns2)
-
-    testcols1 <- columns1[columns1 %in% sample(columns1,n1/3,replace=FALSE)]
-    testcols2 <- columns2[columns2 %in% sample(columns2,n2/3,replace=FALSE)]
-    testcols <- c(testcols1,testcols2)
-    testcols1.length <- length(testcols1)
-    testcols2.length <- length(testcols2)
-    testcols.length <- length(testcols)
-    testsample <- elist$E[,testcols]
-
-    traincols1 <- columns1[!(columns1 %in% testcols1)]
-    traincols2 <- columns2[!(columns2 %in% testcols2)]
-    traincols <- c(traincols1,traincols2)
-    traincols1.length <- length(traincols1)
-    traincols2.length <- length(traincols2)
-    traincols.length <- length(traincols)
-    trainsample <- elist$E[,traincols]
-    trainsample1 <- elist$E[,traincols1]
-    trainsample2 <- elist$E[,traincols2]
-
-    idx <- paste(elist$genes$Block,elist$genes$Row,elist$genes$Column)
-    p <- vector(mode="numeric", length=row.number)
-    x <- c(1:traincols2.length)
-    y <- c(1:traincols1.length)
-    for(zeile in 1:row.number) {
-        mCount.results <- 1 + matrix(unlist(mapply("mCount", idx=x,
-          MoreArgs=list(vector1=trainsample1[zeile,],
-          vector2=trainsample2[zeile,], above=above, between=between))),2,
-          traincols2.length)
-        indexes <- array(c(x, mCount.results[1,]), dim=c(traincols2.length,2))
-        pij.results <- mMs.matrix1[indexes]
-        min.order1 <- which.min(pij.results)
-        min.p1 <- pij.results[min.order1]
-        #min.count1 <- mCount.results[1,min.order1]
-        #min.cutoff1 <- mCount.results[2,min.order1]
-
-        mCount.results <- 1 + matrix(unlist(mapply("mCount", idx=y,
-          MoreArgs=list(vector1=trainsample2[zeile,],
-          vector2=trainsample1[zeile,], above=above, between=between))),2,
-          traincols1.length)
-        indexes <- array(c(y, mCount.results[1,]), dim=c(traincols1.length,2))
-        pij.results <- mMs.matrix2[indexes]
-        min.order2 <- which.min(pij.results)
-        min.p2 <- pij.results[min.order2]
-        #min.count2 <- mCount.results[1,min.order2]
-        #min.cutoff2 <- mCount.results[2,min.order2]
-        p[zeile] <- min(min.p1,min.p2)
-    }
-
-    trainsample <- cbind(p, trainsample)
-    colnames(trainsample) <- c("p value",traincols)
-    rownames(trainsample) <- idx
-    trainsample <- trainsample[order(trainsample[,1]),]
-    
-    testsample <- cbind(p, testsample)
-    colnames(testsample) <- c("p value",testcols)
-    rownames(testsample) <- idx
-    testsample <- testsample[order(testsample[,1]),]
-
-    return(list(trainsample=trainsample, testsample=testsample,
-      traincols1=traincols1, traincols2=traincols2, testcols=testcols))
-}
-#+++++++++++++++++++++++++++ mMsFS +++++++++++++++++++++++++++++++++++++++
-
-#+++++++++++++++++++++++++++ mMs +++++++++++++++++++++++++++++++++++++++
-#column 01: BRC
-#column 02: Description
-#column 03: Name
-#column 04: ID
-#column 05: Group1 Order
-#column 06: Group1 Count
-#column 07: Group1 Cutoff
-#column 08: Group2 Order
-#column 09: Group2 Count
-#column 10: Group2 Cutoff
-#column 11: minimum M statistic
-#column 12: Candidate
-#column 13: Group1 Mean
-#column 14: Group2 Mean
-#column 15: Fold Change
-#column 16: Group1 Count Prospector
-#column 17: Group2 Count Prospector
-#column 18: Cutoff Prospector
-#columns 19 - (18+n1+n2): colnames(elist$E)
-mMs <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
-  label2="B", above=1500, between=400, discard.threshold=0.5, fold.thresh=1.5,
-  discard.features=FALSE, mMs.matrix1=NULL, mMs.matrix2=NULL){
-    
-    if(is.null(elist) || is.null(columns1) || is.null(columns2) ||
-      is.null(mMs.matrix1) || is.null(mMs.matrix2)) {
-        stop("ERROR: Not all mandatory arguments have been defined!")
-    }
-    
-    row.number <- nrow(elist$E)
-    col.number <- ncol(elist$E)
-    n1 <- length(columns1)
-    n2 <- length(columns2)
-    discard <- c()
-    count <- 0
-
-    output.matrix <- matrix(nrow=row.number,ncol=18+n1+n2)
-    x <- 1:n2
-    y <- 1:n1
-    for(zeile in 1:row.number) {
-        mCount.results <- 1 + matrix(unlist(mapply("mCount", idx=x,
-          MoreArgs=list(vector1=elist$E[zeile,1:n1],
-          vector2=elist$E[zeile,(n1+1):col.number], above=above,
-          between=between))),2,n2)
-        indexes <- array(c(x, mCount.results[1,]), dim=c(n2,2))
-        pij.results <- mMs.matrix1[indexes]
-        min.order1 <- which.min(pij.results)
-        min.p1 <- pij.results[min.order1]
-        min.count1 <- mCount.results[1,min.order1]
-        min.cutoff1 <- mCount.results[2,min.order1]
-
-        mCount.results <- 1 + matrix(unlist(mapply("mCount", idx=y,
-          MoreArgs=list(vector1=elist$E[zeile,(n1+1):col.number],
-          vector2=elist$E[zeile,1:n1], above=above, between=between))),2,n1)
-        indexes <- array(c(y, mCount.results[1,]), dim=c(n1,2))
-        pij.results <- mMs.matrix2[indexes]
-        min.order2 <- which.min(pij.results)
-        min.p2 <- pij.results[min.order2]
-        min.count2 <- mCount.results[1,min.order2]
-        min.cutoff2 <- mCount.results[2,min.order2]
-        
-        if(min.p1 < min.p2) {
-            prosp.count1 <- min.count1 - 1
-            prosp.count2 <- min.order1 - 1 
-            prosp.cutoff <- min.cutoff1 - 1 
-        }else if(min.p1 > min.p2) {
-            prosp.count2 <- min.count2 - 1
-            prosp.count1 <- min.order2 - 1
-            prosp.cutoff <- min.cutoff2 - 1
-        }else{
-            prosp.count1 <- min.count1 - 1
-            prosp.count2 <- min.count2 - 1
-            prosp.cutoff <- min.cutoff2 - 1   
-            #Prospector seems to use group 2 cutoff when winner group is
-            #indeterminate (checked for some examples)
-        }
-
-        mean1 <- mean(elist$E[zeile,1:n1])
-        mean2 <- mean(elist$E[zeile,(n1+1):col.number])
-        fold <- mean1 / mean2
-        if(min(min.p1,min.p2) < discard.threshold && (fold > fold.thresh ||
-          fold < 1/fold.thresh)) {
-            
-            idx.tmp <- paste(elist$genes$Block[zeile],elist$genes$Row[zeile],
-              elist$genes$Column[zeile])
-            count <- count+1
-            
-            output.matrix[count,] <- c(idx.tmp, elist$genes$Description[zeile],
-              elist$genes$Name[zeile], elist$genes$ID[zeile], min.order1,
-              min.count1, min.cutoff1, min.order2, min.count2, min.cutoff2,
-              min(min.p1,min.p2),
-              if(min.p2 < min.p1) label2 else if (min.p2 > min.p1) label1
-              else "indeterminate", mean1, mean2, fold, prosp.count1,
-              prosp.count2, prosp.cutoff, elist$E[zeile,])
-            
-            #output.matrix[count,] <- c(idx.tmp, elist$genes[zeile,4],
-            # elist$genes[zeile,5], elist$genes[zeile,6], min.order1,
-            # min.count1, min.cutoff1, min.order2, min.count2, min.cutoff2,
-            # round(min(min.p1,min.p2),9),
-            # if(min.p2 < min.p1) label2 else if (min.p2 > min.p1) label1 else
-            # "indeterminate", mean1, mean2, fold, prosp.count1, prosp.count2,
-            # prosp.cutoff, elist$E[zeile,])
-        }else if(discard.features) {
-            discard <- c(discard,zeile)
-        }
-        #message('computing minimum M statistics: ',
-        # round(zeile*100/{row.number-1}), '%\r', sep="")
-    }
-    #message('computing minimum M statistics: ', '100', '%\n', sep="")
-
-    output.matrix <- data.frame(output.matrix[1:count,])
-    
-    colnames(output.matrix) <- c("BRC","Description","Name","ID",
-     paste(label1," Order",sep=""),paste(label1," Count",sep=""),
-     paste(label1," Cutoff",sep=""),paste(label2," Order",sep=""),
-     paste(label2," Count",sep=""),paste(label2," Cutoff",sep=""),
-     "minimum M statistic","Candidate",paste(label1," Mean",sep=""),
-     paste(label2," Mean",sep=""),"Fold Change",
-     paste(label1,".Count Prosp.",sep=""),
-     paste(label2,".Count Prosp.",sep=""),"Cutoff Prosp.",colnames(elist$E))
-
-    if(discard.features){
-        return(list(results=output.matrix, discard=discard))
-    }else{
-        return(output.matrix)
-    }
-}
-#+++++++++++++++++++++++++++ mMs +++++++++++++++++++++++++++++++++++++++
+##+++++++++++++++++++++++++++ mMsFS +++++++++++++++++++++++++++++++++++++++
+#mMsFS <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
+#  label2="B", above=1500, between=400, mMs.matrix1=NULL, mMs.matrix2=NULL){
+#    
+#    if(is.null(elist) || is.null(columns1) || is.null(columns2) ||
+#      is.null(mMs.matrix1) || is.null(mMs.matrix2)) {
+#        stop("ERROR: Not all mandatory arguments have been defined!")
+#    }
+#    
+#    row.number <- nrow(elist$E)
+#    n1 <- length(columns1)
+#    n2 <- length(columns2)
+#
+#    testcols1 <- columns1[columns1 %in% sample(columns1,n1/3,replace=FALSE)]
+#    testcols2 <- columns2[columns2 %in% sample(columns2,n2/3,replace=FALSE)]
+#    testcols <- c(testcols1,testcols2)
+#    testcols1.length <- length(testcols1)
+#    testcols2.length <- length(testcols2)
+#    testcols.length <- length(testcols)
+#    testsample <- elist$E[,testcols]
+#
+#    traincols1 <- columns1[!(columns1 %in% testcols1)]
+#    traincols2 <- columns2[!(columns2 %in% testcols2)]
+#    traincols <- c(traincols1,traincols2)
+#    traincols1.length <- length(traincols1)
+#    traincols2.length <- length(traincols2)
+#    traincols.length <- length(traincols)
+#    trainsample <- elist$E[,traincols]
+#    trainsample1 <- elist$E[,traincols1]
+#    trainsample2 <- elist$E[,traincols2]
+#
+#    idx <- paste(elist$genes$Block,elist$genes$Row,elist$genes$Column)
+#    p <- vector(mode="numeric", length=row.number)
+#    x <- c(1:traincols2.length)
+#    y <- c(1:traincols1.length)
+#    for(zeile in 1:row.number) {
+#        mCount.results <- 1 + matrix(unlist(mapply("mCount", idx=x,
+#          MoreArgs=list(vector1=trainsample1[zeile,],
+#          vector2=trainsample2[zeile,], above=above, between=between))),2,
+#          traincols2.length)
+#        indexes <- array(c(x, mCount.results[1,]), dim=c(traincols2.length,2))
+#        pij.results <- mMs.matrix1[indexes]
+#        min.order1 <- which.min(pij.results)
+#        min.p1 <- pij.results[min.order1]
+#        #min.count1 <- mCount.results[1,min.order1]
+#        #min.cutoff1 <- mCount.results[2,min.order1]
+#
+#        mCount.results <- 1 + matrix(unlist(mapply("mCount", idx=y,
+#          MoreArgs=list(vector1=trainsample2[zeile,],
+#          vector2=trainsample1[zeile,], above=above, between=between))),2,
+#          traincols1.length)
+#        indexes <- array(c(y, mCount.results[1,]), dim=c(traincols1.length,2))
+#        pij.results <- mMs.matrix2[indexes]
+#        min.order2 <- which.min(pij.results)
+#        min.p2 <- pij.results[min.order2]
+#        #min.count2 <- mCount.results[1,min.order2]
+#        #min.cutoff2 <- mCount.results[2,min.order2]
+#        p[zeile] <- min(min.p1,min.p2)
+#    }
+#
+#    trainsample <- cbind(p, trainsample)
+#    colnames(trainsample) <- c("p value",traincols)
+#    rownames(trainsample) <- idx
+#    trainsample <- trainsample[order(trainsample[,1]),]
+#    
+#    testsample <- cbind(p, testsample)
+#    colnames(testsample) <- c("p value",testcols)
+#    rownames(testsample) <- idx
+#    testsample <- testsample[order(testsample[,1]),]
+#
+#    return(list(trainsample=trainsample, testsample=testsample,
+#      traincols1=traincols1, traincols2=traincols2, testcols=testcols))
+#}
+##+++++++++++++++++++++++++++ mMsFS +++++++++++++++++++++++++++++++++++++++
+#
+##+++++++++++++++++++++++++++ mMs +++++++++++++++++++++++++++++++++++++++
+##column 01: BRC
+##column 02: Description
+##column 03: Name
+##column 04: ID
+##column 05: Group1 Order
+##column 06: Group1 Count
+##column 07: Group1 Cutoff
+##column 08: Group2 Order
+##column 09: Group2 Count
+##column 10: Group2 Cutoff
+##column 11: minimum M statistic
+##column 12: Candidate
+##column 13: Group1 Mean
+##column 14: Group2 Mean
+##column 15: Fold Change
+##column 16: Group1 Count Prospector
+##column 17: Group2 Count Prospector
+##column 18: Cutoff Prospector
+##columns 19 - (18+n1+n2): colnames(elist$E)
+#mMs <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
+#  label2="B", above=1500, between=400, discard.threshold=0.5, fold.thresh=1.5,
+#  discard.features=FALSE, mMs.matrix1=NULL, mMs.matrix2=NULL){
+#    
+#    if(is.null(elist) || is.null(columns1) || is.null(columns2) ||
+#      is.null(mMs.matrix1) || is.null(mMs.matrix2)) {
+#        stop("ERROR: Not all mandatory arguments have been defined!")
+#    }
+#    
+#    row.number <- nrow(elist$E)
+#    col.number <- ncol(elist$E)
+#    n1 <- length(columns1)
+#    n2 <- length(columns2)
+#    discard <- c()
+#    count <- 0
+#
+#    output.matrix <- matrix(nrow=row.number,ncol=18+n1+n2)
+#    x <- 1:n2
+#    y <- 1:n1
+#    for(zeile in 1:row.number) {
+#        mCount.results <- 1 + matrix(unlist(mapply("mCount", idx=x,
+#          MoreArgs=list(vector1=elist$E[zeile,1:n1],
+#          vector2=elist$E[zeile,(n1+1):col.number], above=above,
+#          between=between))),2,n2)
+#        indexes <- array(c(x, mCount.results[1,]), dim=c(n2,2))
+#        pij.results <- mMs.matrix1[indexes]
+#        min.order1 <- which.min(pij.results)
+#        min.p1 <- pij.results[min.order1]
+#        min.count1 <- mCount.results[1,min.order1]
+#        min.cutoff1 <- mCount.results[2,min.order1]
+#
+#        mCount.results <- 1 + matrix(unlist(mapply("mCount", idx=y,
+#          MoreArgs=list(vector1=elist$E[zeile,(n1+1):col.number],
+#          vector2=elist$E[zeile,1:n1], above=above, between=between))),2,n1)
+#        indexes <- array(c(y, mCount.results[1,]), dim=c(n1,2))
+#        pij.results <- mMs.matrix2[indexes]
+#        min.order2 <- which.min(pij.results)
+#        min.p2 <- pij.results[min.order2]
+#        min.count2 <- mCount.results[1,min.order2]
+#        min.cutoff2 <- mCount.results[2,min.order2]
+#        
+#        if(min.p1 < min.p2) {
+#            prosp.count1 <- min.count1 - 1
+#            prosp.count2 <- min.order1 - 1 
+#            prosp.cutoff <- min.cutoff1 - 1 
+#        }else if(min.p1 > min.p2) {
+#            prosp.count2 <- min.count2 - 1
+#            prosp.count1 <- min.order2 - 1
+#            prosp.cutoff <- min.cutoff2 - 1
+#        }else{
+#            prosp.count1 <- min.count1 - 1
+#            prosp.count2 <- min.count2 - 1
+#            prosp.cutoff <- min.cutoff2 - 1   
+#            #Prospector seems to use group 2 cutoff when winner group is
+#            #indeterminate (checked for some examples)
+#        }
+#
+#        mean1 <- mean(elist$E[zeile,1:n1])
+#        mean2 <- mean(elist$E[zeile,(n1+1):col.number])
+#        fold <- mean1 / mean2
+#        if(min(min.p1,min.p2) < discard.threshold && (fold > fold.thresh ||
+#          fold < 1/fold.thresh)) {
+#            
+#            idx.tmp <- paste(elist$genes$Block[zeile],elist$genes$Row[zeile],
+#              elist$genes$Column[zeile])
+#            count <- count+1
+#            
+#            output.matrix[count,] <- c(idx.tmp, elist$genes$Description[zeile],
+#              elist$genes$Name[zeile], elist$genes$ID[zeile], min.order1,
+#              min.count1, min.cutoff1, min.order2, min.count2, min.cutoff2,
+#              min(min.p1,min.p2),
+#              if(min.p2 < min.p1) label2 else if (min.p2 > min.p1) label1
+#              else "indeterminate", mean1, mean2, fold, prosp.count1,
+#              prosp.count2, prosp.cutoff, elist$E[zeile,])
+#            
+#            #output.matrix[count,] <- c(idx.tmp, elist$genes[zeile,4],
+#            # elist$genes[zeile,5], elist$genes[zeile,6], min.order1,
+#            # min.count1, min.cutoff1, min.order2, min.count2, min.cutoff2,
+#            # round(min(min.p1,min.p2),9),
+#            # if(min.p2 < min.p1) label2 else if (min.p2 > min.p1) label1 else
+#            # "indeterminate", mean1, mean2, fold, prosp.count1, prosp.count2,
+#            # prosp.cutoff, elist$E[zeile,])
+#        }else if(discard.features) {
+#            discard <- c(discard,zeile)
+#        }
+#        #message('computing minimum M statistics: ',
+#        # round(zeile*100/{row.number-1}), '%\r', sep="")
+#    }
+#    #message('computing minimum M statistics: ', '100', '%\n', sep="")
+#
+#    output.matrix <- data.frame(output.matrix[1:count,])
+#    
+#    colnames(output.matrix) <- c("BRC","Description","Name","ID",
+#     paste(label1," Order",sep=""),paste(label1," Count",sep=""),
+#     paste(label1," Cutoff",sep=""),paste(label2," Order",sep=""),
+#     paste(label2," Count",sep=""),paste(label2," Cutoff",sep=""),
+#     "minimum M statistic","Candidate",paste(label1," Mean",sep=""),
+#     paste(label2," Mean",sep=""),"Fold Change",
+#     paste(label1,".Count Prosp.",sep=""),
+#     paste(label2,".Count Prosp.",sep=""),"Cutoff Prosp.",colnames(elist$E))
+#
+#    if(discard.features){
+#        return(list(results=output.matrix, discard=discard))
+#    }else{
+#        return(output.matrix)
+#    }
+#}
+##+++++++++++++++++++++++++++ mMs +++++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++++++++++++ mMsFS2 +++++++++++++++++++++++++++++++++++++++
 mMsFS2 <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
@@ -1318,6 +1319,8 @@ mMs2 <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
     n2 <- length(columns2)
     discard <- c()
     count <- 0
+    message(paste0("row.numer: ", row.number))
+    message(paste0("col.numer: ", col.number))
 
     output.matrix <- matrix(nrow=row.number,ncol=18+n1+n2)
     mCount.results1 <- mCount(x=elist$E[,1:n1], y=elist$E[,{n1+1}:col.number],
@@ -1377,6 +1380,10 @@ mMs2 <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
             discard <- c(discard,zeile)
         }
     }
+    
+    if(count==0){
+        warning("No features fulfill the prefiltering thresholds!")
+    }
 
     output.matrix <- data.frame(output.matrix[1:count,])
     colnames(output.matrix) <- c("BRC","Description","Name","ID",
@@ -1397,64 +1404,99 @@ mMs2 <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
 #+++++++++++++++++++++++++++ mMs2 +++++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++++++++++++ loadGPR +++++++++++++++++++++++++++++++++++++++
-loadGPR <- function(gpr.path=NULL, targets.path=NULL, array.type="ProtoArray",
-  protoarray.aggregation="min", array.columns=list(E="F635 Median",
-  Eb="B635 Median"),
-  array.annotation=c("Block", "Column", "Row", "Description", "Name", "ID")){
+loadGPR <- function(gpr.path=NULL, targets.path=NULL, array.type=NULL,
+  aggregation="none", array.columns=list(E="F635 Median", Eb="B635 Median"),
+  array.annotation=c("Block", "Column", "Row", "Description", "Name", "ID"),
+  description=NULL, description.features=NULL, description.discard=NULL){
 
-    if(is.null(gpr.path) || is.null(targets.path)) {
+    if(is.null(gpr.path) || is.null(targets.path) || is.null(array.type)) {
         stop("ERROR: Not all mandatory arguments have been defined!")
+    }
+    if(!is.null(description) && is.null(description.features)) {
+        stop(paste0("ERROR: If 'description' is defined 'description.features'",
+        " is mandatory!"))
+    }
+    if(!is.null(description) && is.null(description.discard)) {
+        stop(paste0("ERROR: If 'description' is defined 'description.discard' ",
+        "is mandatory!"))
     }
     targets <- readTargets(targets.path)
     elist.tmp <- read.maimages(files=targets, path=gpr.path,
       source="genepix.median", columns=array.columns,
       annotation=array.annotation)
+    if(length(setdiff(array.annotation, colnames(elist.tmp$genes))) > 0){
+        warning(paste0("The following columns were not imported: ",
+        paste(setdiff(array.annotation, colnames(elist.tmp$genes)),
+        collapse=", ")),
+        ". If one of these columns is mandatory (see the loadGPR() ",
+        "documentation to check whether a column is mandatory) this may cause ",
+        "serious errors.")
+    }
      
     # For ProtoArrays: construct missing column 'Description' from the column
-    # 'Name'  
+    # 'Name'. Alternatively, another column in elist$genes and other
+    # regular expressions can be specified.  
     if(is.null(elist.tmp$genes$Description) && array.type=="ProtoArray"){
         elist.tmp$genes <- cbind(elist.tmp$genes,
           rep("NA",nrow(elist.tmp$genes)), stringsAsFactors=FALSE)
         colnames(elist.tmp$genes)[ncol(elist.tmp$genes)] <- "Description"
         features <- grep("^Hs~", elist.tmp$genes$Name)
         controls <- grep("^Hs~", elist.tmp$genes$Name, invert=TRUE)
-        empty <- grep("^Empty", elist.tmp$genes$Name) 
+        empty <- grep("(^Empty|^EMPTY)", elist.tmp$genes$Name) 
         #controls <-
-        #  grep("(^HumanIg|^Anti-HumanIg|^V5control|Anti-human-Ig|V5Control)",
+        #  grep("(^HumanIg|^Anti-HumanIg|^V5|Anti-human-Ig|V5Control)",
         #  elist.tmp$genes$Name)
         elist.tmp$genes$Description[features] <- "Feature"
         elist.tmp$genes$Description[controls] <- "Control"
         elist.tmp$genes$Description[empty] <- "Empty"  
+    }else if(is.null(elist.tmp$genes$Description) && !is.null(description)
+      && !is.null(description.features) && !is.null(description.discard)){
+      
+        elist.tmp$genes <- cbind(elist.tmp$genes,
+          rep("NA",nrow(elist.tmp$genes)), stringsAsFactors=FALSE)
+        colnames(elist.tmp$genes)[ncol(elist.tmp$genes)] <- "Description"
+        
+        features <- grep(description.features, elist.tmp$genes[,description])
+        controls <- grep(description.features, elist.tmp$genes[,description],
+          invert=TRUE)
+        empty <- grep(description.discard, elist.tmp$genes[,description])
+        
+        elist.tmp$genes$Description[features] <- "Feature"
+        elist.tmp$genes$Description[controls] <- "Control"
+        elist.tmp$genes$Description[empty] <- "Empty"    
     } 
 
     # If no match, grep will return 'integer(0)' resulting in an empty elist$E
     # in the following lines. Hence the following if-statements are necessary:
-    if(any(grep("(^Empty$|^NA$)", elist.tmp$genes$Description))){
-      elist.tmp <- elist.tmp[-grep("(^Empty$|^NA$)",
+    if(any(grep("(^Empty$|^EMPTY$|^NA$)", elist.tmp$genes$Description))){
+      elist.tmp <- elist.tmp[-grep("(^Empty$|^EMPTY$|^NA$)",
        elist.tmp$genes$Description),]
     }
-    if(any(grep("^Control$", elist.tmp$genes$Description))){
-      elist <- elist.tmp[-grep("^Control$", elist.tmp$genes$Description),]
+    if(any(grep("(^Control$|^CONTROL$)", elist.tmp$genes$Description))){
+      elist <- elist.tmp[-grep("(^Control$|^CONTROL$)", elist.tmp$genes$Description),]
     }
 
     colnames(elist$E) <- targets$ArrayID
     colnames(elist$Eb) <- colnames(elist$E)
 
-    if(array.type=="ProtoArray" && protoarray.aggregation=="min"){
+    if(aggregation=="none"){
+        cat("No aggregation performed.\n")
+    }else if(array.type=="ProtoArray" && aggregation=="min"){
         row.len <- nrow(elist$E)
         col.len <- ncol(elist$E)
         tmp.col.len <- (row.len*col.len)/2
         elist$E[row(elist$E)[,1]%%2==1] <-
           matrix(apply(matrix(elist$E,2,tmp.col.len),2,min),row.len/2,col.len)
         elist <- elist[-row(elist)[,1]%%2==1,]
-    }else if(array.type=="ProtoArray" && protoarray.aggregation=="mean"){
+    }else if(array.type=="ProtoArray" && aggregation=="mean"){
         elist$E[row(elist$E)[,1]%%2==1,] <-
           (elist$E[row(elist$E)[,1]%%2==1,]+elist$E[row(elist$E)[,1]%%2==0,])/2
         elist <- elist[-row(elist)[,1]%%2==1,]
-    }else if(array.type=="ProtoArray" && protoarray.aggregation=="none"){
-        cat("No aggregation performed.\n")
     }else{
-        stop("ERROR: Unknown aggregation approach!")
+        stop(paste0("ERROR: This aggregation approach is for the specified ",
+        "array type not supported.\nPlease contact the PAA maintainer for a ",
+        "possible implementation of the requested agrregation approach for ",
+        "this array type."))
     }
     
     # Adding controls data to the EListRaw object for ProtoArrays in order to
@@ -1469,7 +1511,21 @@ loadGPR <- function(gpr.path=NULL, targets.path=NULL, array.type="ProtoArray",
         elist$cgenes <- elist.tmp$genes
         colnames(elist$C) <- colnames(elist$E)
         colnames(elist$Cb) <- colnames(elist$E)
+    }else if(array.type != "ProtoArray" && !is.null(description)){
+        elist.tmp <-
+          elist.tmp[grep("^Control$", elist.tmp$genes$Description),]
+        elist.tmp$genes$Name <-
+          gsub('^([0-9A-Za-z_-]*)~(.*)', '\\1', elist.tmp$genes$Name)
+        elist$C <- elist.tmp$E
+        elist$Cb <- elist.tmp$Eb
+        elist$cgenes <- elist.tmp$genes
+        colnames(elist$C) <- colnames(elist$E)
+        colnames(elist$Cb) <- colnames(elist$E)
     }
+    
+    # Adding this custom component in order to check the microarray type in
+    # type-specific functions
+    elist$array.type <- array.type
     
     return(elist)
 }
@@ -1501,24 +1557,33 @@ batchAdjust <- function(elist=NULL, log=NULL){
 #+++++++++++++++++++++++++++ batchAdjust +++++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++++++++++++ batchFilter +++++++++++++++++++++++++++++++++++++++
-batchFilter <- function(elist=NULL, lot1=NULL, lot2=NULL, p.thresh=0.05,
-  fold.thresh=1.5, output.path=NULL){
+batchFilter <- function(elist=NULL, lot1=NULL, lot2=NULL, log=NULL,
+  p.thresh=0.05, fold.thresh=1.5, output.path=NULL){
     
-    if(is.null(elist) || is.null(lot1) || is.null(lot2)) {
-        stop("ERROR: Not all mandatory arguments have been defined!")
+    if(is.null(elist) || is.null(lot1) || is.null(lot2) || is.null(log)) {
+        stop("batchFilter - ERROR: Not all mandatory arguments defined!")
     }
-    row.number <- nrow(elist$E)
-    col.number <- ncol(elist$E)
+    
+    if(log==FALSE){
+        E <- log2(elist$E)
+    }else{
+        E <- elist$E
+    }
+    
+    row.number <- nrow(E)
+    col.number <- ncol(E)
     discard <- c()
     output <- matrix(nrow=row.number, ncol=4)
     colnames(output) <- c("BRC", "P-value", "Fold change", "Description")
 
     for(zeile in 1:row.number) {
-        p <- try(t.test(x=elist$E[zeile,lot1],
-          y=elist$E[zeile,lot2])$p.value, FALSE)
+        p <- try(t.test(x=E[zeile,lot1],
+          y=E[zeile,lot2])$p.value, FALSE)
         if(!is.numeric(p)){p <- 1}
         
-        fold <- mean(elist$E[zeile, lot1])/mean(elist$E[zeile, lot2])
+        fold <- 2^(mean(E[zeile, lot1]) - mean(E[zeile, lot2]))
+                # --> data must be in log2 scale!
+        
         output[zeile,] <- c(paste(elist$genes$Block[zeile],
           elist$genes$Row[zeile], elist$genes$Column[zeile]), p, fold,
           elist$genes$Description[zeile])
@@ -1532,7 +1597,7 @@ batchFilter <- function(elist=NULL, lot1=NULL, lot2=NULL, p.thresh=0.05,
     if(is.null(output.path)) {
         plot(x=log2(as.numeric(output[,3])), y=-log10(as.numeric(output[,2])),
           xlab="log2(fold change)", ylab="-log10(p-value)",
-          main="batch filter volcano")
+          main="Batch Filter Volcano")
         if(length(discard)>0){
             points(x=log2(as.numeric(output[discard,3])),
               y=-log10(as.numeric(output[discard,2])), col="red")
@@ -1554,7 +1619,7 @@ batchFilter <- function(elist=NULL, lot1=NULL, lot2=NULL, p.thresh=0.05,
           height=2000, pointsize=15, compression="lzw", res=300)
             plot(x=log2(as.numeric(output[,3])),
               y=-log10(as.numeric(output[,2])), xlab="log2(fold change)",
-              ylab="-log10(p-value)", main="batch filter volcano")
+              ylab="-log10(p-value)", main="Batch Filter Volcano")
             if(length(discard)>0){
                 points(x=log2(as.numeric(output[discard,3])),
                   y=-log10(as.numeric(output[discard,2])), col="red")
@@ -1569,7 +1634,7 @@ batchFilter <- function(elist=NULL, lot1=NULL, lot2=NULL, p.thresh=0.05,
                 plot(x=log2(as.numeric(output[-discard,3])),
                   y=-log10(as.numeric(output[-discard,2])),
                   xlab="log2(fold change)", ylab="-log10(p-value)",
-                  main="batch filter volcano")
+                  main="Batch Filter Volcano")
             dev.off()
             elist <- elist[-discard,]
         }
@@ -1580,6 +1645,13 @@ batchFilter <- function(elist=NULL, lot1=NULL, lot2=NULL, p.thresh=0.05,
 
 #++++++++++++++++++++++++ normalizeRLM() +++++++++++++++++++++++++++++++++++++++
 normalizeRLM <- function(elist=NULL, controls="internal", output.path=NULL){
+    
+    if(elist$array.type != "ProtoArray"){
+        stop(paste0("ERROR: Wrong microarray type! RLM normalization is", 
+        " currently implemented only for 'array.type=ProtoArray'.\n",
+        "If you need this normalization approach for other types of protein",
+        " microarrays please contact the PAA maintainer."))
+    }
     
     controls.elist <- list(E = elist$C, genes = elist$cgenes)  
         
@@ -1593,15 +1665,15 @@ normalizeRLM <- function(elist=NULL, controls="internal", output.path=NULL){
           
     }else if(controls == "external"){
         controls.elist$E <-
-          controls.elist$E[grep("^V5control", controls.elist$genes$Name),]
+          controls.elist$E[grep("^V5", controls.elist$genes$Name),]
         controls.elist$genes <-
-          controls.elist$genes[grep("^V5control", controls.elist$genes$Name),]
+          controls.elist$genes[grep("^V5", controls.elist$genes$Name),]
     }else if(controls == "both"){
         controls.elist$E <-
-          controls.elist$E[grep("(^HumanIg|^Anti-HumanIg|^V5control)", 
+          controls.elist$E[grep("(^HumanIg|^Anti-HumanIg|^V5)", 
           controls.elist$genes$Name),]
         controls.elist$genes <-
-          controls.elist$genes[grep("(^HumanIg|^Anti-HumanIg|^V5control)", 
+          controls.elist$genes[grep("(^HumanIg|^Anti-HumanIg|^V5)", 
           controls.elist$genes$Name),]
     }else{
         controls.elist$E <-
@@ -1723,7 +1795,7 @@ normalizeRLM <- function(elist=NULL, controls="internal", output.path=NULL){
 
         tiff(paste(output.path,"/rlm/rlm_raw.tiff",sep=""), width=4000,
           height=2000, pointsize=10, compression="lzw", res=300)
-            boxplot(log(elist$E), col="gray", cex=0.6, cex.axis=0.6, las=3)
+            boxplot(log2(elist$E), col="gray", cex=0.6, cex.axis=0.6, las=3)
         dev.off()
         
         tiff(paste(output.path,"/rlm/rlm_normalized.tiff",sep=""), width=4000,
@@ -1871,9 +1943,21 @@ plotNormMethods <- function(elist=NULL, include.rlm=FALSE, controls="internal",
 #+++++++++++++++++++++++++++ preselect +++++++++++++++++++++++++++++++++++++++
 
 preselect <- function(elist=NULL, columns1=NULL, columns2=NULL, label1="A",
-  label2="B", discard.threshold=0.5, fold.thresh=1.5, discard.features=TRUE,
-  mMs.above=1500, mMs.between=400, mMs.matrix1=NULL, mMs.matrix2=NULL,
-  method=NULL){
+  label2="B", log=NULL, discard.threshold=0.5, fold.thresh=1.5,
+  discard.features=TRUE, mMs.above=1500, mMs.between=400, mMs.matrix1=NULL,
+  mMs.matrix2=NULL, method=NULL){
+    
+    if(is.null(log)) {
+        stop("preselect - ERROR: Not all mandatory arguments defined!")
+    }
+    
+    if(method=="mMs" && log==TRUE){
+        elist$E <- 2^(elist$E)
+    }else if(method=="tTest" && log==FALSE){
+        elist$E <- log2(elist$E)
+    }else if(method=="mrmr" && log==FALSE){
+        elist$E <- log2(elist$E)
+    }
     
     if(method=="mMs"){
         mMs2(elist=elist, columns1=columns1, columns2=columns2, label1=label1,
@@ -2564,11 +2648,11 @@ selectFeatures.ensemble <- function(elist=NULL, n1=NULL, n2=NULL, label1="A",
 #+++++++++++++++++++++++++ selectFeatures ++++++++++++++++++++++++++++++++++++++
 
 selectFeatures <- function(elist=NULL, n1=NULL, n2=NULL, label1="A", label2="B",
-  cutoff=10, selection.method="rf.rfe", preselection.method="mMs", subruns=100,
-  k=10, subsamples=10, bootstraps=10, candidate.number=300, above=1500,
-  between=400, panel.selection.criterion="accuracy", importance.measure="MDA",
-  ntree=500, mtry=NULL, plot=FALSE, output.path=NULL, verbose=FALSE,
-  method="frequency"){
+  log=NULL, cutoff=10, selection.method="rf.rfe", preselection.method="mMs",
+  subruns=100, k=10, subsamples=10, bootstraps=10, candidate.number=300,
+  above=1500, between=400, panel.selection.criterion="accuracy",
+  importance.measure="MDA", ntree=500, mtry=NULL, plot=FALSE, output.path=NULL,
+  verbose=FALSE, method="frequency"){
     
     if(k < 2){
         stop("ERROR: k must be > 1!")
@@ -2577,6 +2661,22 @@ selectFeatures <- function(elist=NULL, n1=NULL, n2=NULL, label1="A", label2="B",
           ") must be >= candidate.number (here: ", candidate.number, ")!",
           sep=""))
     }
+    
+    
+    
+    if(is.null(log)) {
+        stop("selectFeatures - ERROR: Not all mandatory arguments defined!")
+    }
+    
+    if(preselection.method=="mMs" && log==TRUE){
+        elist$E <- 2^(elist$E)
+    }else if(preselection.method=="tTest" && log==FALSE){
+        elist$E <- log2(elist$E)
+    }else if(preselection.method=="mrmr" && log==FALSE){
+        elist$E <- log2(elist$E)
+    }
+    
+    
     
     if(method=="ensemble"){
         selectFeatures.ensemble(elist=elist, n1=n1, n2=n2, label1=label1,
@@ -2680,23 +2780,43 @@ plotFeaturesHeatmap <- function(features=NULL, elist=NULL, n1=NULL, n2=NULL,
         mar2 <- 5
         cxRow=1
     }
-    my.dist <- function(x) as.dist(1 - abs(cor(t(x), method="pearson")))
+    #my.dist <- function(x) as.dist(1 - abs(cor(t(x), method="pearson")))
+    my.dist <- function(x) as.dist((1-cor(t(x)))/2)
       #"euclidean", "maximum", "manhattan", "canberra", "binary" or "minkowski"
     my.hclust <- function(d) hclust(d, method="complete")
       #"ward", "single", "complete", "average", "mcquitty",
       #"median" or "centroid"
+    #if(!is.null(output.path)){
+    #    tiff(paste(output.path,"/biomarker_heatmap.tiff",sep=""), width=2000,
+    #      height=2000, pointsize=15, compression="lzw", res=300) 
+    #        heatmap(datamatrix,Rowv=NA,Colv=NA,distfun=my.dist,
+    #          hclustfun=my.hclust,col = cm.colors(300), cexCol=0.5,
+    #          cexRow=cxRow, margins=c(2, mar2))
+    #          #col:cm.colors,terrain.colors,heat.colors,topo.colors,rainbow,gray
+    #    dev.off()
+    #} else {
+    #    heatmap(datamatrix,Rowv=NA,Colv=NA,distfun=my.dist,
+    #      hclustfun=my.hclust,col = cm.colors(300), cexCol=0.5, cexRow=cxRow,
+    #      margins=c(2, mar2))
+    #      #col:cm.colors,terrain.colors,heat.colors,topo.colors,rainbow,gray
+    #}
+    
     if(!is.null(output.path)){
         tiff(paste(output.path,"/biomarker_heatmap.tiff",sep=""), width=2000,
           height=2000, pointsize=15, compression="lzw", res=300) 
-            heatmap(datamatrix,Rowv=NA,Colv=NA,distfun=my.dist,
-              hclustfun=my.hclust,col = cm.colors(256), cexCol=0.5,
-              cexRow=cxRow, margins=c(2, mar2))
+            heatmap(datamatrix,Colv=NA,keep.dendro=FALSE,distfun=my.dist,
+              hclustfun=my.hclust,scale="row",
+              #col = bluered(300),
+              col = blueyellow(300),
+              cexCol=0.5,cexRow=cxRow, margins=c(2, mar2))
               #col:cm.colors,terrain.colors,heat.colors,topo.colors,rainbow,gray
         dev.off()
     } else {
-        heatmap(datamatrix,Rowv=NA,Colv=NA,distfun=my.dist,
-          hclustfun=my.hclust,col = cm.colors(256), cexCol=0.5, cexRow=cxRow,
-          margins=c(2, mar2))
+        heatmap(datamatrix,Colv=NA,keep.dendro=FALSE,distfun=my.dist,
+          hclustfun=my.hclust,scale="row",
+          #col = bluered(300),
+          col = blueyellow(300),
+          cexCol=0.5, cexRow=cxRow, margins=c(2, mar2))
           #col:cm.colors,terrain.colors,heat.colors,topo.colors,rainbow,gray
     }
 }
@@ -2987,13 +3107,18 @@ shuffleData <- function(elist=NULL, n1=NULL, n2=NULL, label1="A", label2="B"){
 #+++++++++++++++++++++++++++ shuffleData +++++++++++++++++++++++++++++++++++++++        
 
 #+++++++++++++++++++++++++++ pvaluePlot +++++++++++++++++++++++++++++++++++++++
-pvaluePlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
-  output.path=NULL, tag="", mMs.matrix1=NULL, mMs.matrix2=NULL, above=1500,
-  between=400, adjust=FALSE){
+pvaluePlot <- function(elist=NULL, group1=NULL, group2=NULL, log=NULL,
+  method="tTest", output.path=NULL, tag="", mMs.matrix1=NULL, mMs.matrix2=NULL,
+  above=1500, between=400, adjust=FALSE){
     
-    if(is.null(elist) || is.null(group1) || is.null(group2)) {
+    if(is.null(elist) || is.null(group1) || is.null(group2) || is.null(log)) {
         stop("ERROR: Not all mandatory arguments have been defined!")
     }
+    
+    if(method=="mMs" && log==TRUE){
+        elist$E <- 2^(elist$E)
+    }
+    
     row.number <- nrow(elist$E)
     col.number <- ncol(elist$E)
     pvalues <- vector(mode="numeric", length=row.number)
@@ -3007,7 +3132,7 @@ pvaluePlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
           a=above, b=between)
     }
     for(zeile in 1:row.number) {
-        fold <- mean(elist$E[zeile, group1])/mean(elist$E[zeile, group2])
+        #fold <- mean(elist$E[zeile, group1])/mean(elist$E[zeile, group2])
         if(method=="tTest"){
             p <- try(t.test(x=elist$E[zeile,group1],
               y=elist$E[zeile,group2])$p.value, TRUE)
@@ -3042,7 +3167,7 @@ pvaluePlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
             abline(h=log2(0.01), lty=2, col="green")
             abline(h=log2(0.05/row.number), lty=2, col="blue")
             legend("bottomright", legend=c("p-value = 0.05", "p-value = 0.01",
-              "bonferroni"), col=c("red", "green", "blue"), lty=c(2,2,2))
+              "Bonferroni"), col=c("red", "green", "blue"), lty=c(2,2,2))
         }
     } else {
         if(adjust){
@@ -3064,7 +3189,7 @@ pvaluePlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
                 abline(h=log2(0.01), lty=2, col="green")
                 abline(h=log2(0.05/row.number), lty=2, col="blue")
                 legend("bottomright", legend=c("p-value = 0.05",
-                  "p-value = 0.01", "bonferroni"), col=c("red", "green",
+                  "p-value = 0.01", "Bonferroni"), col=c("red", "green",
                   "blue"), lty=c(2,2,2))
             dev.off()
         }
@@ -3073,13 +3198,20 @@ pvaluePlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
 #+++++++++++++++++++++++++++ pvaluePlot ++++++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++++++++++++ volcanoPlot +++++++++++++++++++++++++++++++++++++++
-volcanoPlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
-  p.thresh=NULL, fold.thresh=NULL, output.path=NULL, tag="", mMs.matrix1=NULL,
-  mMs.matrix2=NULL, above=1500, between=400){
+volcanoPlot <- function(elist=NULL, group1=NULL, group2=NULL, log=NULL,
+  method="tTest", p.thresh=NULL, fold.thresh=NULL, output.path=NULL, tag="",
+  mMs.matrix1=NULL, mMs.matrix2=NULL, above=1500, between=400){
     
-    if(is.null(elist) || is.null(group1) || is.null(group2)) {
+    if(is.null(elist) || is.null(group1) || is.null(group2) || is.null(log)) {
         stop("ERROR: Not all mandatory arguments have been defined!")
     }
+    
+    if(method=="tTest" && log==FALSE){
+        elist$E <- log2(elist$E)
+    }else if(method=="mMs" && log==TRUE){
+        elist$E <- 2^(elist$E)
+    }
+    
     row.number <- nrow(elist$E)
     col.number <- ncol(elist$E)
     mark <- c()
@@ -3096,7 +3228,12 @@ volcanoPlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
           a=above, b=between)
     }
     for(zeile in 1:row.number) {
-        fold <- mean(elist$E[zeile, group1])/mean(elist$E[zeile, group2])
+        if(log == TRUE){
+            fold <- 
+              2^(mean(elist$E[zeile, group1]) - mean(elist$E[zeile, group2]))
+        }else{
+            fold <- mean(elist$E[zeile, group1]) / mean(elist$E[zeile, group2])
+        }
         if(method=="tTest"){
             p <- try(t.test(x=elist$E[zeile,group1],
               y=elist$E[zeile,group2])$p.value, TRUE)
@@ -3134,19 +3271,19 @@ volcanoPlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
     if(is.null(output.path) && is.null(p.thresh) && is.null(fold.thresh)){
       # --> -A & -B & -C
         plot(x=log2(as.numeric(output[,3])), y=-log10(as.numeric(output[,2])),
-          xlab="log2(fold change)", ylab="-log10(p-value)", main="volcano plot")
+          xlab="log2(fold change)", ylab="-log10(p-value)", main="Volcano Plot")
     }else if(!is.null(output.path) && is.null(p.thresh) &&
       is.null(fold.thresh)) {    # --> A & -B & -C
         tiff(paste(output.path,"/volcano", tag, ".tiff",sep=""), width=2000,
           height=2000, pointsize=15, compression="lzw", res=300)
             plot(x=log2(as.numeric(output[,3])),
               y=-log10(as.numeric(output[,2])), xlab="log2(fold change)",
-              ylab="-log10(p-value)", main="volcano plot")
+              ylab="-log10(p-value)", main="Volcano Plot")
         dev.off()
     }else if(is.null(output.path) && !is.null(p.thresh) &&
       is.null(fold.thresh)) { # --> -A & B & -C
         plot(x=log2(as.numeric(output[,3])), y=-log10(as.numeric(output[,2])),
-          xlab="log2(fold change)", ylab="-log10(p-value)", main="volcano plot")
+          xlab="log2(fold change)", ylab="-log10(p-value)", main="Volcano Plot")
         points(x=log2(as.numeric(output[mark,3])),
           y=-log10(as.numeric(output[mark,2])), col="red")
         abline(h=-log10(p.thresh), lty=2, col="red") 
@@ -3155,7 +3292,7 @@ volcanoPlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
         tiff(paste(output.path,"/volcano", tag, ".tiff",sep=""), width=2000,
           height=2000, pointsize=15, compression="lzw", res=300)
         plot(x=log2(as.numeric(output[,3])), y=-log10(as.numeric(output[,2])),
-          xlab="log2(fold change)", ylab="-log10(p-value)", main="volcano plot")
+          xlab="log2(fold change)", ylab="-log10(p-value)", main="Volcano Plot")
             points(x=log2(as.numeric(output[mark,3])),
               y=-log10(as.numeric(output[mark,2])), col="red")
             abline(h=-log10(p.thresh), lty=2, col="red")
@@ -3163,7 +3300,7 @@ volcanoPlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
     }else if(is.null(output.path) && is.null(p.thresh) &&
       !is.null(fold.thresh)) {   # --> -A & -B & C
         plot(x=log2(as.numeric(output[,3])), y=-log10(as.numeric(output[,2])),
-          xlab="log2(fold change)", ylab="-log10(p-value)", main="volcano plot")
+          xlab="log2(fold change)", ylab="-log10(p-value)", main="Volcano Plot")
         points(x=log2(as.numeric(output[mark,3])),
           y=-log10(as.numeric(output[mark,2])), col="red")
         abline(v=log2(fold.thresh), lty=2, col="red")
@@ -3173,7 +3310,7 @@ volcanoPlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
         tiff(paste(output.path,"/volcano", tag, ".tiff",sep=""), width=2000,
           height=2000, pointsize=15, compression="lzw", res=300)
         plot(x=log2(as.numeric(output[,3])), y=-log10(as.numeric(output[,2])),
-          xlab="log2(fold change)", ylab="-log10(p-value)", main="volcano plot")
+          xlab="log2(fold change)", ylab="-log10(p-value)", main="Volcano Plot")
             points(x=log2(as.numeric(output[mark,3])),
               y=-log10(as.numeric(output[mark,2])), col="red")
             abline(v=log2(fold.thresh), lty=2, col="red")
@@ -3182,7 +3319,7 @@ volcanoPlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
     }else if(is.null(output.path) && !is.null(p.thresh) &&
       !is.null(fold.thresh)) {    # --> -A & B & C
         plot(x=log2(as.numeric(output[,3])), y=-log10(as.numeric(output[,2])),
-          xlab="log2(fold change)", ylab="-log10(p-value)", main="volcano plot")
+          xlab="log2(fold change)", ylab="-log10(p-value)", main="Volcano Plot")
         points(x=log2(as.numeric(output[mark,3])),
           y=-log10(as.numeric(output[mark,2])), col="red")
         abline(h=-log10(p.thresh), lty=2, col="red")
@@ -3194,7 +3331,7 @@ volcanoPlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
           height=2000, pointsize=15, compression="lzw", res=300)
             plot(x=log2(as.numeric(output[,3])),
               y=-log10(as.numeric(output[,2])), xlab="log2(fold change)",
-              ylab="-log10(p-value)", main="volcano plot")
+              ylab="-log10(p-value)", main="Volcano Plot")
             points(x=log2(as.numeric(output[mark,3])),
               y=-log10(as.numeric(output[mark,2])), col="red")
             abline(h=-log10(p.thresh), lty=2, col="red")
@@ -3207,13 +3344,14 @@ volcanoPlot <- function(elist=NULL, group1=NULL, group2=NULL, method="tTest",
 
 #+++++++++++++++++++++++++++ diffAnalysis ++++++++++++++++++++++++++++++++++++++
 diffAnalysis <- function(input=NULL, label1=NULL, label2=NULL, class1=NULL,
-  class2=NULL, output.path=NULL, mMs.matrix1=NULL, mMs.matrix2=NULL, above=1500,
-  between=400, features=NULL, feature.names=NULL){
+  class2=NULL, output.path=NULL, mMs.matrix1=NULL, mMs.matrix2=NULL,
+  above=1500, between=400, features=NULL, feature.names=NULL){
     
     if(is.null(input) || is.null(label1) || is.null(label2) || is.null(class1)
       || is.null(class2) || is.null(mMs.matrix1) || is.null(mMs.matrix2)) {
         stop("ERROR: Not all mandatory arguments have been defined!")
     }
+    
     row.number <- nrow(input)
     col.number <- ncol(input)
     output <- matrix(nrow=row.number, ncol=12)
@@ -3279,8 +3417,8 @@ diffAnalysis <- function(input=NULL, label1=NULL, label2=NULL, class1=NULL,
 }
 #++++++++++++++++++++++++++ diffAnalysis +++++++++++++++++++++++++++++++++++++++
 
-#++++++++++++++++++++++++++++ plotTiff +++++++++++++++++++++++++++++++++++++++++
-plotTiff <- function (plot.ma=NULL, tag=NULL, idx=NULL, array.label=NULL,
+#++++++++++++++++++++++++++++ plotArrayTiff ++++++++++++++++++++++++++++++++++++
+plotArrayTiff <- function (plot.ma=NULL, tag=NULL, idx=NULL, array.label=NULL,
   block.dim=NULL, colpal="heat.colors", output.path=NULL) {
     
   if(!is.null(output.path)){
@@ -3374,24 +3512,124 @@ plotTiff <- function (plot.ma=NULL, tag=NULL, idx=NULL, array.label=NULL,
       )
     }
 } 
-#++++++++++++++++++++++++++++ plotTiff +++++++++++++++++++++++++++++++++++++++++
+#++++++++++++++++++++++++++++ plotArrayTiff ++++++++++++++++++++++++++++++++++++
+
+#+++++++++++++++++++++++++++++ plotArrayPng ++++++++++++++++++++++++++++++++++++
+plotArrayPng <- function (plot.ma=NULL, tag=NULL, idx=NULL, array.label=NULL,
+  block.dim=NULL, colpal="heat.colors", output.path=NULL) {
+    
+  if(!is.null(output.path)){
+      #Create output directory if not present. Warning if already present will
+      #be supressed
+      dir.create(file.path(output.path, "array_plots"), showWarnings = FALSE)
+      #Defining the dimensions and layout of the heatmap and its color key
+      # 1. Heatmap
+      # 2. Row dendrogram
+      # 3. Column dendrogram
+      # 4. Key
+      #
+      # Layout here:
+      # 0   3
+      # 2   1
+      # 0   4
+      #
+      #
+      # --> lwid and lhei are relative values: 1 = 100%, 2 = 200%, etc.
+      lmat <-  rbind(c(0,3),c(2,1),c(0,4)) 
+      lwid <-  c(1, 5)
+      lhei <-  c(0.75,6,1.5)
+    
+      #Opening png device
+      png(
+        paste0(output.path,"/array_plots/",Sys.Date(),"_array_plot_",tag,"_",
+        idx,".png"),
+        width = 2000, 
+        height = 5000,  
+        pointsize = 10, 
+        res = 300
+      )
+      heatmap.2(
+        plot.ma,              # Source data
+        dendrogram="none",    # Col and Row Dendrogram         
+        trace="none",         # Trace line in the main histogram
+        Rowv=FALSE,           # Row clustering
+        Colv=FALSE,           # Column clustering
+        na.color="black",     # Color of NA values
+        col=colpal,           # Color palette
+        breaks = 50,          # Number of breaks between lowest & highest color
+        lmat = lmat,          # Defined above
+        lhei = lhei,          # Defined above
+        lwid = lwid,          # Defined above
+        main = paste0(array.label," Array Plot"), # Heatmap title
+        margins = c(5,10),    # Label margins
+        colsep = c((1:4)*block.dim), # Separation of Columns
+        rowsep = c((1:12)*22),  # Separation of Rows
+        sepwidth = c(0.0025, 0.0025),  # Separation width
+        cexCol = 0.6,         # Margins for Col names
+        cexRow = 0.6,         # Margins for Row names
+        denscol = "black",    # Density map Histogram color
+        keysize = 0.01,          # Color key size
+        symkey = FALSE,       # Symmetry of color key around 0
+        symbreaks = FALSE,    # Symmetry of breaks around 0
+        na.rm = TRUE          # Remove NA values
+      )
+      dev.off()
+    }else{
+      #Defining the dimensions and layout of the heatmap and its color key
+      lmat <-  rbind(c(0,3,0),c(2,1,0),c(0,4,0)) 
+      lwid <-  c(0.7, 1, 0.3)
+      #lhei <-  c(0.15,1,0.3)
+      lhei <-  c(0.17,1,0.3)
+      
+      heatmap.2(
+        plot.ma,              # Source data
+        dendrogram="none",    # Col and Row Dendrogram         
+        trace="none",         # Trace line in the main histogram
+        Rowv=FALSE,           # Row clustering
+        Colv=FALSE,           # Column clustering
+        na.color="black",     # Color of NA values
+        col=colpal,           # Color palette
+        breaks = 50,          # Number of breaks between lowest & highest color
+        lmat = lmat,          # Defined above
+        lhei = lhei,          # Defined above
+        lwid = lwid,          # Defined above
+        main = paste0(array.label," Array Plot"), # Heatmap title
+        margins = c(5,10),    # Label margins
+        colsep = c((1:4)*block.dim), # Separation of Columns
+        rowsep = c((1:12)*22),  # Separation of Rows
+        sepwidth = c(0.0025, 0.0025),  # Separation width
+        cexCol = 0.6,         # Margins for Col names
+        cexRow = 0.6,         # Margins for Row names            
+        denscol = "black",    # Density map Histogram color
+        keysize = 1,          # Color key size
+        symkey = FALSE,       # Symmetry of color key around 0
+        symbreaks = FALSE,    # Symmetry of breaks around 0
+        na.rm = TRUE          # Remove NA values
+      )
+    }
+} 
+#+++++++++++++++++++++++++++++ plotArrayPng ++++++++++++++++++++++++++++++++++++
 
 #+++++++++++++++++++++++++++++++ plotArray +++++++++++++++++++++++++++++++++++++
 plotArray <- function(elist=NULL, idx=NULL, data.type="fg", log=NULL,
-  normalized=NULL, protoarray.aggregation=NULL, colpal="heat.colors",
-  output.path=NULL) {  
+  normalized=NULL, aggregation=NULL, colpal="heat.colors",
+  graphics.device="tiff", output.path=NULL) {  
 
   if(is.null(elist) || is.null(idx) || is.null(log) || is.null(normalized) ||
-    is.null(protoarray.aggregation)) {
+    is.null(aggregation)) {
         stop("ERROR: Not all mandatory arguments have been defined!")
   }
+  
+  n.blocks <- elist$printer$ngrid.c*elist$printer$ngrid.r
+  n.block.c <- elist$printer$nspot.c
+  n.block.r <- elist$printer$nspot.r
   
   if(idx == "all"){
       idx <- 1:ncol(elist$E)
   }
   
-  if(protoarray.aggregation=="min"){
-      block.dim <- 11
+  if(aggregation=="min"){
+      block.dim <- n.block.c/2
       row.len <- nrow(elist$C)
       col.len <- ncol(elist$C)
       tmp.col.len <- (row.len*col.len)/2
@@ -3403,11 +3641,11 @@ plotArray <- function(elist=NULL, idx=NULL, data.type="fg", log=NULL,
       elist$Cb <- elist$Cb[row(elist$Cb)[,1]%%2==1,]
       elist$cgenes <- elist$cgenes[row(elist$cgenes)[,1]%%2==1,]
       
-      ref.df <- data.frame("Block"=rep(1:48, each=22*22),
-        "Column"=1:22, "Row"=rep(1:22, each=22))
+      ref.df <- data.frame("Block"=rep(1:n.blocks, each=n.block.c*n.block.r),
+        "Column"=1:n.block.c, "Row"=rep(1:n.block.r, each=n.block.c))
       ref.df <- ref.df[row(ref.df)[,1]%%2==1,]
-  }else if(protoarray.aggregation=="mean"){
-      block.dim <- 11
+  }else if(aggregation=="mean"){
+      block.dim <- n.block.c/2    # NEW!!!
       elist$C[row(elist$C)[,1]%%2==1,] <-
         (elist$C[row(elist$C)[,1]%%2==1,]+elist$C[row(elist$C)[,1]%%2==0,])/2
       elist$C <- elist$C[row(elist$C)[,1]%%2==1,]
@@ -3417,13 +3655,13 @@ plotArray <- function(elist=NULL, idx=NULL, data.type="fg", log=NULL,
       elist$Cb <- elist$Cb[row(elist$Cb)[,1]%%2==1,]
       elist$cgenes <- elist$cgenes[row(elist$cgenes)[,1]%%2==1,]
       
-      ref.df <- data.frame("Block"=rep(1:48, each=22*22),
-        "Column"=1:22, "Row"=rep(1:22, each=22))
+      ref.df <- data.frame("Block"=rep(1:n.blocks, each=n.block.c*n.block.r),
+        "Column"=1:n.block.c, "Row"=rep(1:n.block.r, each=n.block.c))
       ref.df <- ref.df[row(ref.df)[,1]%%2==1,]
-  }else if(protoarray.aggregation=="none"){
-      block.dim <- 22
-      ref.df <- data.frame("Block"=rep(1:48, each=22*22),
-        "Column"=1:22, "Row"=rep(1:22, each=22))
+  }else if(aggregation=="none"){
+      block.dim <- n.block.c
+      ref.df <- data.frame("Block"=rep(1:n.blocks, each=n.block.c*n.block.r),
+        "Column"=1:n.block.c, "Row"=rep(1:n.block.r, each=n.block.c))
   }else{
       stop("ERROR: Unknown aggregation approach!")
   }
@@ -3453,10 +3691,13 @@ plotArray <- function(elist=NULL, idx=NULL, data.type="fg", log=NULL,
     tl <- transfer.list  
   
     #Merge array data into reference data frame
+    #alternative UTF-workaround: "sort=FALSE" added to keep rows orders
     full.df <- merge(ref.df, tl, by = c("Block", "Column", "Row"), all.x = TRUE)
   
-    #Modulo used to define first and last block in a row 
-    x <- unique(full.df$Block)%%4
+    #Modulo used to define first and last block in a row
+    # UTF-workaround: instead of x <- unique(full.df$Block)%%4 
+    x <- sort(unique(full.df$Block))%%4
+    # ++++++++++++++++++++++++++++++++++++++++++
     
     blocks <- 1   #Loop counter for blocks
     block.rows <- 1   #Loop counter for block.rows
@@ -3491,9 +3732,324 @@ plotArray <- function(elist=NULL, idx=NULL, data.type="fg", log=NULL,
     if(log == FALSE) {                                      
       plot.ma <- log2(plot.ma)
     }
-    #Call plotTiff with the aquired data.
-    plotTiff(plot.ma, tag=data.type, idx=idx[i], array.label=array.label, 
-      block.dim=block.dim, colpal=colpal, output.path=output.path)
+    
+    if(graphics.device=="tiff"){
+        #Call plotArrayTiff with the aquired data.
+        plotArrayTiff(plot.ma, tag=data.type, idx=idx[i],
+          array.label=array.label, block.dim=block.dim, colpal=colpal,
+          output.path=output.path)
+    }else if(graphics.device=="png"){
+        #Call plotArrayPng with the aquired data.
+        plotArrayPng(plot.ma, tag=data.type, idx=idx[i],
+          array.label=array.label, block.dim=block.dim, colpal=colpal,
+          output.path=output.path)
+    }else{
+    
+    }
   }  
 }
 #+++++++++++++++++++++++++++++++ plotArray +++++++++++++++++++++++++++++++++++++
+
+#++++++++++++++++++++++ yellowblue ++++++++++++++++++++++++++++++++++++
+bluered <- function(n){
+        #colorpanel(n, "blue", "red")
+        colorpanel(n, "blue", "white", "red")
+}
+#++++++++++++++++++++++ yellowblue ++++++++++++++++++++++++++++++++++++
+
+#++++++++++++++++++++++ blueyellow ++++++++++++++++++++++++++++++++++++
+blueyellow<-function(n){
+        colorpanel(n, "blue", "yellow")
+}
+#++++++++++++++++++++++ blueyellow ++++++++++++++++++++++++++++++++++++
+
+#++++++++++++++++++++++ plotFeaturesHeatmap.2 ++++++++++++++++++++++++++++++++++
+
+plotFeaturesHeatmap.2 <- function(features=NULL, elist=NULL, n1=NULL, n2=NULL,
+  output.path=NULL, description=FALSE){
+
+    if(is.null(features) || is.null(elist) || is.null(n1) || is.null(n2)) {
+        stop("ERROR: Not all mandatory arguments have been defined!")
+    }
+    
+    features <- c(na.exclude(features))
+    datamatrix <- elist$E
+    brc <- paste(elist$genes$Block,elist$genes$Row,elist$genes$Column)
+    rows <- brc %in% features
+    datamatrix <- datamatrix[rows,]
+    if(description){
+        rownames(datamatrix) <- elist$genes$Description[rows]
+    }else{
+        rownames(datamatrix) <- brc[rows]
+    }
+
+    #title <- ""
+    if(nrow(datamatrix) > 100) {
+        cexRowSize <- 0.1
+    } else if(nrow(datamatrix) > 40) {
+        cexRowSize <- 0.4
+    } else {
+        cexRowSize <- 0.8
+    }
+    #ColSideColors <- c(rep("firebrick",n1), rep("green4",n2))
+    #ColSideColors <- c(rep("azure4",n1), rep("gold4",n2))
+    ColSideColors <- c(rep("gray25",n1), rep("gray75",n2))
+    
+    #my.dist <- function(x) as.dist(1 - abs(cor(t(x), method="pearson")))
+    my.dist <- function(x) as.dist((1-cor(t(x)))/2)
+      #"euclidean", "maximum", "manhattan", "canberra", "binary" or "minkowski"
+    #my.hclust <- function(d) hclust(d, method="complete")
+      #"ward", "single", "complete", "average", "mcquitty",
+      #"median" or "centroid"
+
+    #Defining the dimensions and layout of the heatmap and its color key
+    lmat <- rbind(c(5,4),c(0,1),c(3,2))  
+    lwid <- c(1.5,4)
+    lhei <- c(1.5,0.2,4)
+    
+    if(!is.null(output.path)){
+        png(
+            paste0(output.path,"/biomarker_heatmap2.png"),
+            width = 2000,
+            height = 2000,
+            pointsize = 10,
+            res = 300
+        )   
+            heatmap.2(datamatrix,
+                distfun=function(x) as.dist((1-cor(t(x)))/2),
+                Rowv = TRUE,                  #row and col clustering
+                Colv = TRUE,
+                ColSideColors=ColSideColors,
+                col=blueyellow(300),          #color scheme
+                #col=bluered(300),          #color scheme
+                scale="row",                  #scale by column
+                #main=title,                   #title of the heatmap
+                margins = c(15, 15),           #margins around heatmap
+                key=TRUE,                     #legend is present
+                key.title="",                 #no title for legend
+                key.xlab="",                  #no label for legend axis
+                key.ylab="",
+                keysize=1.1,                  #size of legend strip
+                symkey=FALSE,                 #colors not symmetrical around 0
+                density.info="density",       #no density information
+                trace="none",                 #
+                cexRow=cexRowSize,            #column labels' size
+                labRow=substr(row.names(datamatrix),1,35), #row labels
+                labCol=colnames(datamatrix),   #column labels: limit to 30 chars
+                lmat=lmat,
+                lhei=lhei,
+                lwid=lwid
+            )
+            #normalized device coordinates (NDC): c(xmin, xmax, ymin, ymax)
+            par(fig=c(0,0.975,0,0.94), new=TRUE)
+            #xmin <- par("usr")[1]
+            #xmax <- par("usr")[2]
+            #ymin <- par("usr")[3]
+            #ymax <- par("usr")[4]
+            legend("topright",      # legend location
+                legend = c(unique(elist$targets$Group)), # category labels
+                col = c("gray25", "gray75"),  # color key
+                pch = c(15,15),
+                #cex=1.75,
+                bty="n",
+                horiz=TRUE
+            )   
+        dev.off()
+    } else {
+        heatmap.2(datamatrix,
+            distfun=function(x) as.dist((1-cor(t(x)))/2),
+            Rowv = TRUE,                  #row and col clustering
+            Colv = TRUE,
+            ColSideColors=ColSideColors,
+            col=blueyellow(300),          #color scheme
+            #col=bluered(300),           #color scheme
+            scale="row",                  #scale by column
+            #main=title,                   #title of the heatmap
+            margins = c(15,15),           #margins around heatmap
+            key=TRUE,                     #legend is present
+            key.title="",                 #no title for legend
+            key.xlab="",                  #no label for legend axis
+            key.ylab="",
+            keysize=1.1,                  #size of legend strip
+            symkey=FALSE,                 #colors not symmetrical around 0
+            density.info="density",       #no density information
+            trace="none",                 #
+            cexRow=cexRowSize,            #column labels' size
+            labRow=substr(row.names(datamatrix),1,35), #row labels
+            labCol=colnames(datamatrix),   #column labels: limit to 30 chars
+            lmat=lmat,
+            lhei=lhei,
+            lwid=lwid
+        )
+        #normalized device coordinates (NDC): c(xmin, xmax, ymin, ymax)
+        par(fig=c(0,0.975,0,0.94), new=TRUE)
+        #xmin <- par("usr")[1]
+        #xmax <- par("usr")[2]
+        #ymin <- par("usr")[3]
+        #ymax <- par("usr")[4]
+        legend("topright",      # legend location
+            legend = c(unique(elist$targets$Group)), # category labels
+            col = c("gray25", "gray75"),  # color key
+            pch = c(15,15),
+            #cex=1.75,
+            bty="n",
+            horiz=TRUE
+        )   
+    }
+
+}
+
+#++++++++++++++++++++++ plotFeaturesHeatmap.2 ++++++++++++++++++++++++++++++++++
+
+#+++++++++++++++++++++++++++ batchFilter.anova +++++++++++++++++++++++++++++++++
+batchFilter.anova <- function(elist=NULL, log=NULL, p.thresh=0.05,
+  fold.thresh=1.5, output.path=NULL){
+        
+    if(is.null(elist) || is.null(log)) {
+        stop("ERROR: Not all mandatory arguments have been defined!")
+    }
+    
+    if(log==FALSE){
+        E <- log2(elist$E)
+    }else{
+        E <- elist$E
+    }
+    
+    row.number <- nrow(E)
+    col.number <- ncol(E)
+    discard <- c()
+    output <- matrix(nrow=row.number, ncol=4)
+    colnames(output) <- c("BRC", "ANOVA p-value", "Fold Change", "Description")
+    #how many batches and batch combinations are there?
+    batches <- unique(elist$targets$Batch)
+    Nbatches <- length(batches)
+    cat(c("Found batches:", Nbatches, "\n"))
+    #if less than two batches, return null
+    
+    if(Nbatches < 2) {
+        return(NULL)
+    }
+        
+    batch.combs<-combn(Nbatches,2)
+        
+        
+    for(zeile in 1:row.number) {
+        #make df for anova analysis
+        data <- data.frame(Value=E[zeile,], Batch=elist$targets$Batch)
+        
+        #perform anova on readings vs batch
+        p <- oneway.test(Value~Batch,data)$p.value
+        if(is.na(p)) {
+            p <- 1
+        }
+          
+        #get the means for each batch
+        means <- rep(NA,Nbatches)
+        for(batchInd in 1:Nbatches){
+            means[batchInd]<-mean(data[data$Batch==batches[batchInd],"Value"])
+        }
+                
+        #cycle through all combinations, find fold changes
+        #and store them in a separate vector
+        FCvector <- rep(NA,ncol(batch.combs))
+        for(batchInd in 1:ncol(batch.combs)){
+            mean1 <- means[batch.combs[1,batchInd]]
+            mean2 <- means[batch.combs[2,batchInd]]
+            #determine FC
+            FCvector <- 2^(mean1 - mean2)
+                        # --> data must be in log2 scale!
+                        
+        }
+        #if max FC value > then 1/minFC,
+        #take it as FC, else - otherwise
+        FC <- ifelse(max(FCvector) > 1/min(FCvector), max(FCvector),
+         min(FCvector))
+                
+         #prep output table
+         output[zeile,] <- c(paste0(elist$genes[zeile,1], ",",
+          elist$genes[zeile,3], ",",elist$genes[zeile,2]),p, FC,
+          elist$genes[zeile,4])
+                
+         #determine if the feature (row) is to be rejected
+         if(p < p.thresh && (FC > fold.thresh || FC < 1/fold.thresh)) {
+            discard <- c(discard,zeile)
+         }
+    }
+    message(paste0("batchFilter.anova - number of features to discard: ",
+     length(discard)), "\n")
+        
+    if(is.null(output.path)) {
+        plot(x=log2(as.numeric(output[,3])), 
+         y=-log10(as.numeric(output[,2])),
+         xlab="log2(fold change)", 
+         ylab="-log10(p-value)",
+         main="Batch Filter Volcano")
+                
+        if(length(discard)>0){
+            points(x=log2(as.numeric(output[discard,3])),
+             y=-log10(as.numeric(output[discard,2])), 
+             col="red")
+        }
+                
+        abline(h=-log10(p.thresh), lty=2, col="red")
+        abline(v=log2(fold.thresh), lty=2, col="red")                                   
+        abline(v=log2(1/fold.thresh), lty=2, col="red")
+        if(length(discard) > 0){
+            elist <- elist[-discard,]
+        }
+    }else{
+        write.table(x=output, 
+         file=paste0(output.path,"/batch_filter.txt"), 
+         sep="\t", eol="\n",
+         row.names=FALSE,
+         quote=FALSE)
+                
+        write.table(x=output[discard,], 
+          file=paste0(output.path,"/batch_filter_discarded.txt"),
+          sep="\t", eol="\n",
+          row.names=FALSE,
+          quote=FALSE)
+                
+        tiff(paste(output.path,"/batch_filter_before.tiff",sep=""), 
+         width=2000,
+         height=2000,
+         pointsize=15, 
+         compression="lzw", 
+         res=300)
+                
+            plot(x=log2(as.numeric(output[,3])),
+             y=-log10(as.numeric(output[,2])),
+             xlab="log2(fold change)",
+             ylab="-log10(p-value)", 
+             main="Batch Filter Volcano")
+                
+            if(length(discard)>0){
+                points(x=log2(as.numeric(output[discard,3])),
+                y=-log10(as.numeric(output[discard,2])), 
+                col="red")
+            }
+            abline(h=-log10(p.thresh), lty=2, col="red")
+            abline(v=log2(fold.thresh), lty=2, col="red")
+            abline(v=log2(1/fold.thresh), lty=2, col="red")
+        dev.off()
+                
+        if(length(discard) > 0){
+            tiff(paste(output.path,"/batch_filter_after.tiff",sep=""),
+             width=2000,
+             height=2000, 
+             pointsize=15,
+             compression="lzw",
+             res=300)
+                        
+                plot(x=log2(as.numeric(output[-discard,3])),
+                 y=-log10(as.numeric(output[-discard,2])),
+                 xlab="log2(fold change)",
+                 ylab="-log10(p-value)",
+                 main="Batch Filter Volcano")
+            dev.off()
+            elist <- elist[-discard,]            
+        }
+    }
+    return(elist)
+}
+#+++++++++++++++++++++++++++ batchFilter.anova +++++++++++++++++++++++++++++++++
