@@ -1,0 +1,668 @@
+%% \VignetteIndexEntry{PAA tutorial}
+
+\documentclass{article}
+
+<<style, eval=TRUE, echo=FALSE, results=tex>>=
+BiocStyle::latex()
+@
+
+\title{Protein Microarray Data Analysis using the \Biocpkg{PAA} Package}
+\author{Michael Turewicz}
+
+\begin{document}
+\setkeys{Gin}{width=0.8\textwidth}
+\SweaveOpts{concordance=TRUE, pdf=FALSE, png=TRUE}
+
+\maketitle
+
+\tableofcontents
+
+%------------------------------------------------------------------------------
+%                            Introduction
+%------------------------------------------------------------------------------
+\newpage
+\section{Introduction}
+\subsection{General information}
+Protein Array Analyzer (\Biocpkg{PAA}, \textit{Turewicz et al.} \cite{paa}) is a
+package for protein microarray data analysis (esp., \textit{ProtoArray} data).
+It imports single color (protein) microarray data that has been saved in
+\file{gpr} file format. After preprocessing (background correction, batch
+filtering, normalization) univariate feature preselection is performed (e.g.,
+using the "minimum M statistic" approach - hereinafter referred to as "mMs",
+\cite{mMs}). Subsequently, a multivariate feature selection is conducted to
+discover biomarker candidates. For this purpose, either a frequency-based
+backwards elimination approach or ensemble feature selection can be used.
+\Biocpkg{PAA} provides a complete toolbox of analysis tools including several
+different plots for results examination and evaluation.\\
+In this vignette the general workflow of \Biocpkg{PAA} will be outlined by
+analyzing an exemplary data set that accompanies this package.
+
+\subsection{Installation}
+The recommended way to install \Biocpkg{PAA} is to type the commands described
+below in the \R{} console (note: an active internet connection is needed):
+<<install, eval=FALSE, results=hide>>=
+# only if you install a Bioconductor package for the first time
+source("http://www.bioconductor.org/biocLite.R")
+# else
+library("BiocInstaller")
+biocLite("PAA", dependencies=TRUE)
+@
+This will install \Biocpkg{PAA} including all dependencies.
+
+Furthermore, \Biocpkg{PAA} has an external dependency that is needed to provide
+full functionality. This external dependency is the free \textit{C++} software
+package \textit{``Random Jungle''} that can be downloaded from
+\url{http://www.randomjungle.de/}. Note: \Biocpkg{PAA} will be
+usable without \textit{Random Jungle}. However, it needs this package for random
+jungle recursive feature elimination (\textit{RJ-RFE}) provided by the function
+\Rfunction{selectFeatures()}. Please follow the instructions for your OS in the
+README file to install \textit{Random Jungle} properly on your machine.
+
+%------------------------------------------------------------------------------
+%                            Loading PAA and importing data
+%------------------------------------------------------------------------------
+\newpage
+\section{Loading \Biocpkg{PAA} and importing data}
+After launching \R{}, the first step of the exemplary analysis is to load
+\Biocpkg{PAA}.
+<<start, results=hide>>=
+library(PAA)
+@
+
+
+
+New microarray data should be imported using the function \Rfunction{loadGPR()}
+which is mainly a wrapper to \Biocpkg{limma}'s function
+\Rfunction{read.maimages()} featuring optional duplicate aggregation for
+\textit{ProtoArray} data. \Biocpkg{PAA} supports the import of files in
+\file{gpr} file format. The imported data is stored in an expression list object
+(\Rclass{EList}, respectively, \Rclass{EListRaw}, see Bioconductor package
+\Biocpkg{limma}). Paths to a targets file and to a folder containing \file{gpr}
+files (all \file{gpr} files in this folder that are listed in the targets file
+will be read) are mandatory arguments. The folder that can be obtained by the
+command \Rcode{system.file("extdata", package = "PAA")} contains an exemplary
+targets file that can be used as a template. Below, the first 3 rows of this
+targets file are shown.
+<<targets, eval=TRUE, results=verbatim>>=
+targets <- read.table(file=list.files(system.file("extdata", package="PAA"),
+ pattern = "^targets", full.names = TRUE), header=TRUE)
+print(targets[1:3,])
+@
+The columns ``ArrayID'', ``FileName'', and ``Group'' are mandatory. ``Batch'' is
+mandatory for microarray data that has been processed in batches. The remaining
+three columns as well as custom columns containing further information (e.g.,
+clinical data) are optional.
+
+
+
+If \Robject{array.type} is set to \Rcode{"ProtoArray"} duplicate spots
+can be aggregated. After importing, the object can be saved in a
+\file{\*.RData} file for further sessions. In the following code chunk,
+\Rfunction{loadGPR()} is demonstrated using an exemplary dummy data set that
+comes with PAA and has been created from the real data set analyzed in this
+vignette.
+<<loadGPR, eval=TRUE, results=hide>>=
+gpr <- system.file("extdata", package="PAA")
+targets <- list.files(system.file("extdata", package="PAA"),
+   pattern = "dummy_targets", full.names=TRUE)
+dummy.elist <- loadGPR(gpr.path=gpr, targets.path=targets,
+   array.type="ProtoArray")
+save(dummy.elist, file=paste(gpr, "/DummyData.RData",
+   sep=""), compress="xz")
+@
+In many gpr files the mandatory column ``Description'' is not available and the
+needed information is stored in another column. In order to process such gpr 
+files \Rfunction{loadGPR()} constructs a makeshift ``Description'' column. If
+\Robject{array.type} is set to \Rcode{"ProtoArray"} this is performed
+automatically. Otherwise, \Rfunction{loadGPR()} provides the arguments
+\Rcode{description}, \Rcode{description.features} and
+\Rcode{description.discard} to pass the information needed for the construction
+of the makeshift ``Description'' column. In the following code chunk these
+arguments are demonstrated.     
+<<loadGPR, eval=TRUE, results=hide>>=  
+targets2 <- list.files(system.file("extdata", package="PAA"),
+ pattern = "dummy_no_descr_targets", full.names=TRUE)
+elist2 <- loadGPR(gpr.path=gpr, targets.path=targets2, array.type="other",
+ description="Name", description.features="^Hs~", description.discard="Empty")
+@
+
+
+
+\Biocpkg{PAA} comes with an exemplary protein microarray data set.
+This 20 Alzheimer's disease serum samples vs. 20 controls data is a subset of a
+publicly available \textit{ProtoArray} data set. It can be downloaded from the
+repository \textit{``Gene Expression Omnibus''} (\textit{GEO},
+\url{http://www.ncbi.nlm.nih.gov/geo/}, record ``GSE29676''). It has been
+contributed by \textit{Nagele E et al.} \cite{nagele} (note: Because a data
+set stored in \file{gpr} files would be too large to accompany this package the
+exemplary data is stored as an \file{\*.RData} file).
+
+In the following code chunk, the \Biocpkg{PAA} installation path (where
+exemplary data is located) is localized, the new folder \file{demo\_output}
+(where all output of the following analysis will be saved) is created, and the
+exemplary data set is loaded (note: here, exceptionally not via
+\Rfunction{loadGPR()}).
+<<load, results=hide>>=
+cwd <- system.file(package="PAA")
+dir.create(paste(cwd, "/demo/demo_output", sep=""))
+output.path <- paste(cwd, "/demo/demo_output",  sep="")
+load(paste(cwd, "/extdata/Alzheimer.RData", sep=""))
+@
+
+%------------------------------------------------------------------------------
+%                            Preprocessing
+%------------------------------------------------------------------------------
+\newpage
+\section{Preprocessing}
+Before preprocessing the microarrays should be inspected visually for any strong
+spatial biases. In \Biocpkg{PAA} this can be done using the function
+\Rfunction{plotArray()} which plots the imported microarray data in the original
+arrangement mimicking the original scan image. Thus, \Rfunction{plotArray()}
+is a visualization tool that can be used to visualize arrays for which the
+original scan image is not available. Visual inspection of the spatial
+expression pattern can then identify possible local tendencies and strong
+spatial biases. Moreover, the array can be inspected at all stages of the
+preprocessing workflow in order to check the impact of the particular methods
+that have been applied.
+
+Consequently, as a first step, always the plots of the foreground signals
+(\Rcode{data.type="fg"}) should be compared with the plots of the background
+signals (\Rcode{data.type="bg"}).
+\begin{center}
+<<plotArray1, eval=TRUE, results=hide, fig=TRUE>>=
+plotArray(elist=elist, idx=3, data.type="bg", log=FALSE, normalized=FALSE,
+  aggregation="min", colpal="topo.colors")
+@  
+\end{center}
+\begin{center}
+<<plotArray2, eval=TRUE, results=hide, fig=TRUE>>=
+plotArray(elist=elist, idx=3, data.type="fg", log=FALSE, normalized=FALSE,
+  aggregation="min", colpal="topo.colors")
+@  
+\end{center}
+In the exemplary plots shown above there is a relatively strong artifact in the
+background signal that has a slight impact on the foreground signal. In both
+figures an irregular stripe runs from the upper right part of the array to the
+bottom left corner. Although in the background plot this artifact is more
+visible than in the foreground plot the corresponding spatial bias is obvious.    
+
+
+
+For background correction \Biocpkg{limma}'s function
+\Rfunction{backgroundCorrect()} can be used:
+<<backgroundCorrect, results=hide>>=
+library(limma)
+elist <- backgroundCorrect(elist, method="normexp",
+ normexp.method="saddle")
+@
+
+
+
+If the microarrays were manufactured or processed in lots/batches, data analysis
+will suffer from batch effects resulting in wrong results. Hence, the
+elimination of batch effects is a crucial step of data preprocessing. A simple
+method to remove the most obvious batch effects is to find features that are
+extremely differential in different batches. In \Biocpkg{PAA} this can be done
+for two batches using the function \Rfunction{batchFilter()}. This function
+takes an \Rclass{EList} or \Rclass{EListRaw} object and the batch-specific
+column name vectors \Robject{lot1} and \Robject{lot2} to find differential
+features regarding the batches/lots. For this purpose, thresholds for p-values
+(Student's t-test) and fold changes can be defined. To visualize the
+differential features a volcano plot is drawn. Finally, the differential
+features are removed and the remaining data is returned.
+\begin{center}
+<<batchFilter, results=hide, fig=TRUE>>=
+lot1 <- elist$targets[elist$targets$Batch=='Batch1','ArrayID']
+lot2 <- elist$targets[elist$targets$Batch=='Batch2','ArrayID']
+elist.bF <- batchFilter(elist=elist, lot1=lot1, lot2=lot2, log=FALSE,
+ p.thresh=0.001, fold.thresh=3)
+@
+\end{center}
+
+For multi-batch scenarios (i.e., where the number of distinct batches is larger
+than two) \Biocpkg{PAA} provides the function \Rfunction{batchFilter.anova()}.
+This function calculates p-values via an one-way analysis of variance (ANOVA) in
+order to identify features which are differential regarding at least two
+batches. Apart from that this function works analogously to
+\Rfunction{batchFilter()} which has been designed for the scenario of two
+batches. 
+\begin{center}
+<<batchFilterAnova, results=hide, fig=FALSE>>=
+elist.bF.a <- batchFilter.anova(elist=elist, log=FALSE, p.thresh=0.001,
+ fold.thresh=3)
+elist <- elist.bF
+@
+\end{center}
+
+
+
+Another important step in preprocessing is normalization. To assist in choosing
+an appropriate normalization method for a given data set, \Biocpkg{PAA} provides
+two functions: \Rfunction{plotNormMethods()} and \Rfunction{plotMAPlots()}.
+\Rfunction{plotNormMethods()} draws sample-wise boxplots of raw
+data and data after all kinds of normalization provided by \Biocpkg{PAA}. For
+each normalization approach a plot containing all sample-wise boxplots is
+created. All boxplots will be saved as a high-quality \file{tiff} file, if an
+output path is specified.
+\begin{center}
+<<plotNormMethods, eval=FALSE, results=hide, fig=FALSE>>=
+plotNormMethods(elist=elist)
+@
+\end{center}
+
+
+
+\Rfunction{plotMAPlots()} draws MA plots of raw data and data after applying all
+kinds of normalization methods provided by \Biocpkg{PAA}. If \Rcode{idx="all"}
+and an output path is defined (default), for each microarray one \file{tiff}
+file containing MA plots will be created. If \Robject{idx} is an integer
+indicating the column index of a particular sample, MA plots only for this
+sample will be created.
+\begin{center}
+<<plotMAPlots, results=hide, fig=TRUE>>=
+plotMAPlots(elist=elist, idx=10)
+@
+\end{center}
+
+
+
+After choosing a normalization method, the function
+\Rfunction{normalizeArrays()} can be used in order to normalize the data.
+\Rfunction{normalizeArrays()} takes an \Rclass{EListRaw} object, normalizes the
+data, and returns an \Rclass{EList} object containing normalized data in log2
+scale. As normalization methods \Rcode{"cyclicloess"}, \Rcode{"quantile"} or
+\Rcode{"vsn"} can be chosen. Furthermore, for \textit{ProtoArrays} robust linear
+normalization  (\Rcode{"rlm"}, see \textit{Sboner A. et al.} \cite{sboner}) is
+provided.
+<<normalizeArrays, results=verbatim, fig=FALSE>>=
+elist <- normalizeArrays(elist=elist, method="cyclicloess",
+cyclicloess.method="fast")
+@
+
+
+
+In addition to \Rfunction{batchFilter()}, the function \Rfunction{batchAdjust()}
+can be used after normalization via \Rfunction{normalizeArrays()} to adjust the
+data for batch effects. This is a wrapper to \Biocpkg{sva}'s function
+\Rfunction{ComBat()} for batch adjustment using the empirical Bayes approach
+\cite{johnson}. To use \Rfunction{batchAdjust()} the targets file information of
+the \Rclass{EList} object must contain the columns \textit{``Batch''} and
+\textit{``Group''}.
+<<batchAdjust, results=verbatim>>=
+elist <- batchAdjust(elist=elist, log=TRUE)
+@
+
+
+
+After preprocessing, the corrected data can be inspected via
+\Rfunction{plotArray()} again. E.g., now the plot of the ProtoArray already
+plotted shows that the revealed spatial bias is less obvious after
+preprocessing.
+\begin{center}
+<<plotArray3, eval=TRUE, results=hide, fig=TRUE>>=
+plotArray(elist=elist, idx=3, data.type="fg", log=TRUE, normalized=TRUE,
+  aggregation="min", colpal="topo.colors")
+@  
+\end{center}
+
+
+
+Because for further analysis also data in original scale will be needed, a copy
+of the \Rclass{EList} object containing unlogged data should be created.
+<<unlog, results=hide>>=
+elist.unlog <- elist
+elist.unlog$E <- 2^(elist$E)
+@
+
+%------------------------------------------------------------------------------
+%                            Differential analysis
+%------------------------------------------------------------------------------
+\newpage
+\section{Differential analysis}
+The goal of univariate differential analysis is to detect relevant differential
+features. Therefore, statistical measures such as p-values or fold changes are
+considered. \Biocpkg{PAA} provides plotting functions in order to depict the
+number and the quality of the differential features in the data set. 
+Accordingly, the function \Rfunction{volcanoPlot()} draws a volcano plot to
+visualize differential features. For this purpose, thresholds for p-values and
+fold changes can be defined. Furthermore, the p-value computation method
+(\Rcode{"mMs"} or \Rcode{"tTest"}) can be set. When an output path is defined
+(via \Robject{output.path}) the plot will be saved as a \file{tiff} file. In the
+next code chunk, an example with \Rcode{method="tTest"} is given.
+\begin{center}
+<<volcanoPlot1, eval=TRUE, results=hide, fig=TRUE>>=
+c1 <- paste(rep("AD",20), 1:20, sep="")
+c2 <- paste(rep("NDC",20), 1:20, sep="")
+#volcanoPlot(elist=elist.unlog, group1=c1, group2=c2, method="tTest",
+volcanoPlot(elist=elist, group1=c1, group2=c2, log=TRUE, method="tTest",
+p.thresh=0.01, fold.thresh=2)
+@
+\end{center}
+Here, an example with \Rcode{method="mMs"} is given:
+<<volcanoPlot2, eval=FALSE, results=hide, fig=FALSE>>=
+mMs.matrix1 <- mMs.matrix2 <- mMsMatrix(x=20, y=20)
+volcanoPlot(elist=elist.unlog, group1=c1, group2=c2, log=FALSE, method="mMs",
+p.thresh=0.01, fold.thresh=2, mMs.matrix1=mMs.matrix1,
+mMs.matrix2=mMs.matrix2, above=1500, between=400)
+@
+
+
+
+Another plotting function is \Rfunction{pvaluePlot()} which draws a plot of
+p-values for all features in the data set (sorted in increasing order and in
+log2 scale). The p-value computation method (\Rcode{"tTest"} or \Rcode{"mMs"})
+can be set via the argument \Robject{method}. Furthermore, when
+\Rcode{adjust=TRUE} adjusted p-values (method: Benjamini \& Hochberg, 1995,
+computed via \Rfunction{p.adjust()}) will be used. For a better orientation,
+horizontal dashed lines indicate which p-values are smaller than 0.05 and 0.01.
+If \Rcode{adjust=FALSE}, additionally, the respective Bonferroni significance
+threshold (to show p-values that would be smaller than 0.05 after a possible
+Bonferroni correction) for the given data is indicated by a third dashed line.
+Note: Bonferroni is not used for the adjustment. The dashed line is
+for better orientation only. When an output path is defined (via
+\Robject{output.path}) the plot will be saved as a \file{tiff} file. In the next
+code chunk, an example with \Rcode{method="tTest"} is given.
+\begin{center}
+<<pvaluePlot1, eval=TRUE, results=hide, fig=TRUE>>=
+pvaluePlot(elist=elist, group1=c1, group2=c2, log=TRUE, method="tTest")
+@
+\end{center}
+Here, an example with \Rcode{method="mMs"} is given:
+<<pvaluePlot2, eval=FALSE, results=hide, fig=FALSE>>=
+mMs.matrix1 <- mMs.matrix2 <- mMsMatrix(x=20, y=20)
+pvaluePlot(elist=elist.unlog, group1=c1, group2=c2, log=FALSE, method="mMs",
+mMs.matrix1=mMs.matrix1, mMs.matrix2=mMs.matrix2, above=1500,
+between=400)
+@
+Here, an example with \Rcode{method="tTest"} and \Rcode{adjust=TRUE} is given:
+\begin{center}
+<<pvaluePlot3, eval=TRUE, results=hide, fig=TRUE>>=
+pvaluePlot(elist=elist, group1=c1, group2=c2, log=TRUE, method="tTest",
+ adjust=TRUE)
+@
+\end{center}
+Here, an example with \Rcode{method="mMs"} and \Rcode{adjust=TRUE} is given:
+<<pvaluePlot4, eval=FALSE, results=hide, fig=FALSE>>=
+pvaluePlot(elist=elist.unlog, group1=c1, group2=c2, log=FALSE, method="mMs",
+mMs.matrix1=mMs.matrix1, mMs.matrix2=mMs.matrix2, above=1500,
+between=400, adjust=TRUE)
+@
+
+
+
+Finally, \Rfunction{diffAnalysis()} performs a detailed univariate differential
+analysis. This function takes an \Robject{EList\$E}- or \Robject{EListRaw\$E}-
+matrix (e.g., \Rcode{temp <- elist\$E}) extended by row names comprising
+\textit{``BRC''}-IDs of the corresponding features. The BRC-IDs can be
+created via:\\
+\Rcode{brc <- paste(elist\$genes[,1], elist\$genes[,3], elist\$genes[,2])}.\\
+Next, the row names can be assigned as follows: \Rcode{rownames(temp) <- brc}.
+Furthermore, the corresponding column name vectors, group labels and mMs-
+parameters are needed to perform the univariate differential analysis. This
+analysis covers inter alia p-value computation, p-value adjustment (method:
+Benjamini \& Hochberg, 1995), and fold change computation. Since the results
+table is usually large, a path for saving the results should be defined via
+\Robject{output.path}. Optionally, a vector of row indices (\Robject{features})
+and additionally (not mandatory for subset analysis) a vector of corresponding
+feature names (\Robject{feature.names}) can be forwarded to perform the analysis
+for a feature subset.
+<<diffAnalysis, eval=TRUE, results=verbatim, fig=FALSE>>=
+E <- elist.unlog$E
+rownames(E) <- paste(elist.unlog$genes[,1], elist.unlog$genes[,3],
+    elist.unlog$genes[,2])
+write.table(x=cbind(rownames(E),E),
+    file=paste(cwd,"/demo/demo_output/data.txt", sep=""), sep="\t", eol="\n",
+    row.names=FALSE, quote=FALSE)
+mMs.matrix1 <- mMs.matrix2 <- mMsMatrix(x=20, y=20)
+diff.analysis.results <- diffAnalysis(input=E, label1=c1, label2=c2,
+    class1="AD", class2="NDC", output.path=output.path,
+    mMs.matrix1=mMs.matrix1, mMs.matrix2=mMs.matrix2, above=1500,
+    between=400)
+print(diff.analysis.results[1:10,])
+@
+Subsequently, the most relevant differential features (i.e., features having low
+p-values and high absolute fold changes) can be extracted as a univariate
+feature selection. Nevertheless, it is recommended to perform also multivariate
+feature selection and to consider feature panels obtained from both approaches.
+
+%------------------------------------------------------------------------------
+%                            Feature preselection
+%------------------------------------------------------------------------------
+\newpage
+\section{Feature preselection}
+Before multivariate feature selection will be performed, it is recommended to
+discard features that are obviously not differential. Discarding them will
+accelerate runtimes without any negative impact on results. In \Biocpkg{PAA},
+this task is called \textit{``feature preselection''} and it is performed by
+the function \Rfunction{preselect()}. This function iterates all features of the
+data set to score them via \textit{mMs}, \textit{Student's t-test}, or
+\textit{mRMR}. If \Robject{discard.features} is \Rcode{TRUE} (default), all
+features that are considered as obviously not differential will be collected and
+returned for discarding. Which features are considered as not differential
+depends on the parameters \Robject{method}, \Robject{discard.threshold}, and
+\Robject{fold.thresh}.\\
+\begin{itemize}
+ \item If \Rcode{method = "mMs"} features having an \textit{mMs} value larger
+ than \Robject{discard.threshold} (here: numeric between 0.0 and 1.0) or do not
+ satisfy the minimal absolute fold change \Robject{fold.thresh} will be
+ considered as not differential.\\
+ \item If \Rcode{method = "tTest"} features having a p-value larger than
+ \Robject{discard.threshold} (here: numeric between 0.0 and 1.0) or do not
+ satisfy the minimal absolute fold change \Robject{fold.thresh} will be
+ considered as not differential.\\
+ \item If \Rcode{method = "mrmr"} \textit{mRMR} scores for all features will be
+ computed as scoring method (using the function \Rfunction{mRMR.classic()} of
+ the \R{} package \CRANpkg{mRMRe}). Subsequently, features that are not the
+ \Robject{discard.threshold} (here: integer indicating a number of features)
+ features having the best \textit{mRMR} scores are considered as not
+ differential.
+\end{itemize}
+<<preselect, eval=TRUE, results=verbatim, fig=FALSE>>=
+mMs.matrix1 <- mMs.matrix2 <- mMsMatrix(x=20, y=20)
+pre.sel.results <- preselect(elist=elist.unlog, columns1=c1, columns2=c2,
+    label1="AD", label2="NDC", log=FALSE, discard.threshold=0.5,
+    fold.thresh=1.5, discard.features=TRUE, mMs.above=1500, mMs.between=400,
+    mMs.matrix1=mMs.matrix1, mMs.matrix2=mMs.matrix2,
+    method="mMs")
+elist <- elist[-pre.sel.results$discard,]
+@
+
+%------------------------------------------------------------------------------
+%                            Feature selection
+%------------------------------------------------------------------------------
+\newpage
+\section{Feature selection}
+For multivariate feature selection \Biocpkg{PAA} provides the function
+\Rfunction{selectFeatures()}. It performs a multivariate feature selection using
+\textit{``frequency-based''} feature selection (based on \textit{RF-RFE},
+\textit{RJ-RFE} or \textit{SVM-RFE}) or \textit{``ensemble''} feature selection
+(based on \textit{SVM-RFE}).
+
+\textbf{Frequency-based feature selection (\Rcode{method="frequency"}):} The
+whole data is splitted in k cross validation training and test set pairs. For
+each training set a multivariate feature selection procedure is performed. The
+resulting k feature subsets are tested using the corresponding test sets (via
+classification). As a result, \Rfunction{selectFeatures()} returns the average
+k-fold cross validation classification accuracy as well as the selected feature
+panel (i.e., the union set of the k particular feature subsets). As multivariate
+feature selection methods random forest recursive feature elimination
+(\textit{RF-RFE}), random jungle recursive feature elimination (\textit{RJ-RFE})
+and support vector machine recursive feature elimination (\textit{SVM-RFE}) are
+supported. To reduce running times, optionally, an additional univariate feature
+preselection can be performed (control via \Robject{preselection.method}). As
+univariate preselection methods mMs (\Rcode{"mMs"}), Student's t-test
+(\Rcode{"tTest"}) and mRMR (\Rcode{"mrmr"}) are supported. Alternatively, no
+preselection can be chosen (\Rcode{"none"}). This approach is similar to the
+method proposed in \textit{Baek et al.} \cite{baek}.
+
+\textbf{Ensemble feature selection (\Rcode{method="ensemble"}):} From the whole
+data a previously defined number of subsamples is drawn defining pairs of
+training and test sets. Moreover, for each training set a previously defined
+number of bootstrap samples is drawn. Then, for each bootstrap sample
+\textit{SVM-RFE} is performed and a feature ranking is obtained. To obtain a
+final ranking for a particular training set, all associated bootstrap rankings
+are aggregated to a single ranking. To score the \Robject{cutoff} best features,
+for each subsample a classification of the test set is performed (using a svm
+trained with the \Robject{cutoff} best features from the training set) and the
+classification accuracy is determined. Finally, the stability of the
+subsample-specific panels is assessed (via Kuncheva index,
+\textit{Kuncheva LI, 2007} \cite{kuncheva}), all subsample-specific rankings are
+aggregated, the top n features (defined by \Robject{cutoff}) are selected, the
+average classiification accuracy is computed, and all these results are
+returned in a list. This approach has been proposed in \textit{Abeel et al.}
+\cite{abeel}.
+
+\Rfunction{selectFeatures()} takes an \Robject{EListRaw} or \Robject{EList}
+object, group-specific sample numbers, group labels and parameters choosing and
+configuring a multivariate feature selection method (frequency-based or ensemble
+feature selection) to select a panel of differential features. When an output
+path is defined (via \Robject{output.path}) results will be saved on the hard
+disk and when \Robject{verbose} is TRUE additional information will be printed
+to the console. Depending on the selection method, one of two different results
+lists will be returned:\\
+
+\begin{enumerate}
+\item If \Robject{method} is \Rcode{"frequency"}, the results list contains the
+following elements:
+\begin{itemize}
+  \item accuracy: average k-fold cross validation accuracy.
+  \item sensitivity: average k-fold cross validation sensitivity.
+  \item specificity: average k-fold cross validation specificity.
+  \item features: selected feature panel.
+  \item all.results: complete cross validation results.
+\end{itemize}
+
+\item If \Robject{method} is \Rcode{"ensemble"}, the results list contains the
+following elements:
+\begin{itemize}
+  \item accuracy: average accuracy regarding all subsamples.
+  \item sensitivity: average sensitivity regarding all subsamples.
+  \item specificity: average specificity regarding all subsamples.
+  \item features: selected feature panel.
+  \item all.results: all feature ranking results.
+  \item stability: stability of the feature panel (i.e., Kuncheva index for the
+  subrun-specific panels).
+\end{itemize}
+\end{enumerate}
+\newpage
+In the following two code chunks first \textit{``frequency-based''} feature
+selection and then \textit{``ensemble''} feature selection is demonstrated.
+<<selectFeatures1, eval=FALSE, results=hide>>=
+selectFeatures.results <- selectFeatures(elist,n1=20,n2=20,label1="AD",
+    label2="NDC",log=TRUE,selection.method="rf.rfe",subruns=2,
+    candidate.number=1000,method="frequency")
+@
+<<selectFeatures2, eval=FALSE, results=hide>>=
+selectFeatures.results <- selectFeatures(elist,n1=20,n2=20,label1="AD",
+    label2="NDC",log=TRUE,subsamples=10,bootstraps=10,method="ensemble")
+@
+Because runtimes would take too long for this vignette \Biocpkg{PAA} comes with
+precomputed \Robject{selectFeatures.results} objects stored in
+\file{\*.RData} files. These objects can be loaded as follows:
+<<loadSelectFeaturesResults, eval=TRUE, results=hide>>=
+# results of frequency-based feature selection:
+load(paste(cwd, "/extdata/selectFeaturesResultsFreq.RData", sep=""))
+# or results of ensemble feature selection:
+load(paste(cwd, "/extdata/selectFeaturesResultsEns.RData", sep=""))
+@
+
+%------------------------------------------------------------------------------
+%                            Results inspection
+%------------------------------------------------------------------------------
+\newpage
+\section{Results inspection}
+After the selection of a feature panel, these features should be validated by
+manual inspection and evaluation for further research. To aid results
+inspection, \Biocpkg{PAA} provides several functions. The function
+\Rfunction{plotFeatures()} plots the intensities of all features (represented by
+BRC-IDs) that have been selected by \Rfunction{selectFeatures()} (one sub-plot
+per feature) in group-specific colors. All sub-plots are aggregated in one
+figure. If \Robject{output.path} is not NULL, this figure will be saved as a
+\file{tiff} file in \Robject{output.path}.
+\begin{center}
+<<plotFeatures, eval=TRUE, results=verbatim, fig=TRUE>>=
+plotFeatures(features=selectFeatures.results$features, elist=elist, n1=20,
+    n2=20, group1="AD", group2="NDC")
+@
+\end{center}
+
+Alternatively, the function \Rfunction{plotFeaturesHeatmap()} plots intensities
+of all features given in the vector \Robject{features} (represented by BRC-IDs)
+as a heatmap. If \Robject{description} is \Rcode{TRUE} (default:
+\Rcode{FALSE}), features will be described via protein names instead of
+UniProtKB accessions. Again, if \Robject{output.path} is not \Rcode{NULL}, the
+heatmap will be saved as a \file{tiff} file in \Robject{output.path}.
+\begin{center}
+<<plotFeaturesHeatmap, eval=TRUE, results=verbatim, fig=TRUE>>=
+plotFeaturesHeatmap(features=selectFeatures.results$features, elist=elist,
+    n1=20, n2=20, description=TRUE)
+@
+\end{center}
+As an alternative to \Rfunction{plotFeaturesHeatmap()} the function
+\Rfunction{plotFeaturesHeatmap.2()} which is based on the \CRANpkg{gplots}
+function \Rfunction{heatmap.2()} gives similar plots with some additional
+information. Apart from that both functions \Rfunction{plotFeaturesHeatmap()}
+and \Rfunction{plotFeaturesHeatmap.2()} are analogous.    
+\begin{center}
+<<plotFeaturesHeatmap2, eval=TRUE, results=verbatim, fig=TRUE>>=
+plotFeaturesHeatmap.2(features=selectFeatures.results$features, elist=elist,
+    n1=20, n2=20, description=TRUE)
+@
+\end{center}
+
+Finally, the function \Rfunction{printFeatures()} creates a table containing the
+selected biomarker candidate panel as well as additional information for results
+inspection. If \Robject{output.path} is defined, this table will be saved in a
+\file{txt} file (\file{candidates.txt}).
+\begin{center}
+<<printFeatures, eval=TRUE, results=verbatim, fig=FALSE>>=
+elist$E <- round(elist$E,2)
+printFeatures(features=selectFeatures.results$features, elist=elist)[,-2]
+@
+\end{center}
+
+%------------------------------------------------------------------------------
+%                            References
+%------------------------------------------------------------------------------
+\begin{thebibliography}{9}
+\bibitem{paa}
+Turewicz M, Ahrens M, May C, Marcus K, Eisenacher M. PAA: an R/Bioconductor
+package for biomarker discovery with protein microarrays.
+Bioinformatics (2016) 32 (10): 1577-1579. 
+doi:10.1093/bioinformatics/btw037, PubMed PMID: 26803161.
+
+\bibitem{mMs}
+Love B: The Analysis of Protein Arrays. In: Functional Protein Microarrays in
+Drug Discovery. CRC Press; 2007: 381-402.
+
+\bibitem{nagele}
+Nagele E, Han M, Demarshall C, Belinka B, Nagele R (2011): Diagnosis of
+Alzheimer's disease based on disease-specific autoantibody profiles in human
+sera. PLoS One 6: e23112.
+
+\bibitem{sboner}
+Sboner A. et al., Robust-linear-model normalization to reduce technical
+variability in functional protein microarrays. J Proteome Res 2009,
+8(12):5451-5464.
+
+\bibitem{johnson}
+Johnson WE, Li C, and Rabinovic A (2007) Adjusting batch effects in microarray
+expression data using empirical Bayes methods. Biostatistics 8:118-27.
+
+\bibitem{baek}
+Baek S, Tsai CA, Chen JJ.: Development of biomarker classifiers from high-
+dimensional data. Brief Bioinform. 2009 Sep;10(5):537-46.
+
+\bibitem{kuncheva}
+Kuncheva, LI: A stability index for feature selection. Proceedings of the IASTED
+International Conference on Artificial Intelligence and Applications.
+February 12-14, 2007. Pages: 390-395.
+
+\bibitem{abeel}
+Abeel T, Helleputte T, Van de Peer Y, Dupont P, Saeys Y: Robust biomarker
+identification for cancer diagnosis with ensemble feature selection methods.
+Bioinformatics. 2010 Feb 1;26(3):392-8.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,0 +1,270 @@
+RELEASE HISTORY OF THE "PAA" PACKAGE
+===========================================
+
+CHANGES IN PAA VERSION 1.7.1 [2016-05-13]:
+-----------------------------------------------
+GENERAL
+* Built with the latest R version (R-3.2.4 Revised).
+* Built with the latest Rtools version (Rtools 3.3).
+* Update of the PAA citation: PAA applications note, Turewicz et al.,
+  Bioinformatics, 2016, PMID: 26803161, added to the CITATION
+  file.
+* Update of the URL in the DESCTIPTION file.
+* Correction of some typos in the documentation.
+* Update of the vignette to demonstrate the new features.
+
+NEW FEATURES
+* New function: batchFilter.anova() for multi-batch scenarios.
+* New function: plotFeaturesHeatmap.2() as an alternative to
+  plotFeaturesHeatmap().
+* New arguments for loadGPR(): "description", "description.features"
+  and "description.discard" for data import when gpr files don't
+  provide the column "Description". Furthermore, new dummy data
+  has been added to the package in order to demonstrate this
+  new feature.
+* Now the customized object classes EListRaw and EList contain the
+  new component "array.type" added by loadGPR when the data is
+  imported.
+
+IMPROVEMENTS
+* Additional and more informative error messages added.
+* The function plotArray() is more flexible. Now, not only
+  ProtoArrays can be plotted. Moreover, now the plot can be saved
+  also as png file.
+
+
+MODIFICATIONS
+* The loadGPR() and plotArray()-argument "protoarray.aggregation" has
+  been renamed to "aggregation" and the default value has been
+  changed to "none".
+* The loadGPR() argument "array.type" is mandatory now.
+
+BUG FIXES
+* Plots created during rlm normalization by normalizeArrays() were in
+  logE scale and not in log2 scale. This has been fixed.
+* Correction of regular expressions for rlm normalization in
+  normalizeArrays() and for data import in loadGPR().
+
+CHANGES IN PAA VERSION 1.5.1 [2015-10-20]:
+-----------------------------------------------
+GENERAL
+* No changes.
+
+NEW FEATURES
+* The new function plotArray() is available. It can be used for visual inspection of
+  ProtoArrays as well as for the monitoring of the impact of any pre-processing method
+  applied to the data. In order to support the plotting of ProtoArrays before duplicate
+  aggregation and to mimic the original scan image of ProtoArrays, now loadGPR() supports
+  the option protoarray.aggregation="none". Finally, the vignette has been updated in
+  order to describe the new function via an exemplary ProtoArray showing a spatial bias.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* Since the exemplary data have been imported with the bug which has been fixed in PAA
+  version 1.3.3, all exemplary data sets have been reimported with the latest version of
+  loadGPR() and saved as RData files. Now all exemplary data sets are complete.
+
+CHANGES IN PAA VERSION 1.3.3 [2015-07-14]:
+-----------------------------------------------
+GENERAL
+* No changes.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* Bug in the function loadGPR() fixed (due to a wrong regular expression some data rows
+  were not imported from gpr files in PAA versions 1.3.2 and 1.3.1 -> the bug was not
+  relevant for the versions 1.3.0 and older).
+
+CHANGES IN PAA VERSION 1.3.2 [2015-06-22]:
+-----------------------------------------------
+GENERAL
+* Update to the latest R version which has been released a few days ago (2015-06-18).
+* Built with R-3.2.1
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* NEWS file of version 1.3.1 corrected (wrong version number for the last update in the
+  NEWS file).
+
+BUG FIXES
+* No changes.
+
+CHANGES IN PAA VERSION 1.3.1 [2015-06-17]:
+-----------------------------------------------
+GENERAL
+* The optional rlm normalization (for ProtoArrays) used by the functions normalizeArrays(),
+  plotNormMethods() and plotMAPlots() has been completely reimplemented in order to fix
+  some bugs and simplify the usage of these functions (details: see below).
+* Built with R-3.2.0 
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* Due to the modification of the EListRaw objects for ProtoArrays the usage of the
+  functions normalizeArrays(), plotNormMethods() and plotMAPlots() is simplified since
+  some obsolete arguments have been removed (see 'MODIFICATIONS'). Esp., the provision of
+  a second controls-specific EListRaw object for controls data and information was too
+  complex and has confused some users. Now all control spot-specific data and information
+  are stored together with probe-specific data and information in one extended EListRaw
+  object.
+
+MODIFICATIONS
+* On the one hand, the arguments 'controls.elist', 'gpr.path', 'targets.path' and
+  'contr.names' have been removed from the functions normalizeArrays(), plotNormMethods()
+  and plotMAPlots(). On the other hand, the argument 'controls' has been added to the
+  functions normalizeArrays(), plotNormMethods() and plotMAPlots().
+
+BUG FIXES
+* Due to the re-implementation of the optional rlm normalization (for ProtoArrays)
+  used by the functions normalizeArrays(), plotNormMethods(), plotMAPlots(), all bugs
+  that have been reported by users since version 1.0.0 are fixed.
+
+CHANGES IN PAA VERSION 1.1.1 [2015-03-13]:
+-----------------------------------------------
+GENERAL
+* No changes.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* Bug in the function batchAdjust() removed.
+  Because the argument "mod" was not passed as factor to sva's
+  function ComBat() errors were thrown and execution stopped
+  for the latest versions of sva. This has been corrected.
+
+CHANGES IN PAA VERSION 1.0.0 [2014-10-13]:
+-----------------------------------------------
+GENERAL
+* First release version.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* No changes.
+
+CHANGES IN PAA VERSION 0.99.4 [2014-10-03]:
+-----------------------------------------------
+GENERAL
+* First release version.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* Corrected \VignetteIndexEntry{} in the vignette Rnw file.
+
+CHANGES IN PAA VERSION 0.99.3 [2014-10-02]:
+-----------------------------------------------
+GENERAL
+* License changed from GPL-3 to “BSD_3_clause + file LICENSE” due to license compatibility.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* Some dummy gpr files added to demonstrate loadGPR() in man pages and vignette.
+* First unit tests added.
+* Native routines registered.
+* Checking runtimes improved.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* Bug fixes in the vignette (e.g., \comment to \bioccomment). Missing vignette preambel added.
+* Bug fixes in the code (e.g., max. line length of 80 characters ensured, "FALSE" instead of "F").
+* Internal functions removed from export in the NAMESPACE.
+
+CHANGES IN PAA VERSION 0.99.2 [2014-08-05]:
+-----------------------------------------------
+GENERAL
+* No changes.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* Minor change in the vignette (changing the selectFeatures()-option selection.method="rj.rfe"
+to selection.method="rf.rfe" to make the code chunks runable on systems without Random Jungle installed).
+
+CHANGES IN PAA VERSION 0.99.1 [2014-08-05]:
+-----------------------------------------------
+GENERAL
+* No changes.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* Hard coded temp directory replaced by a tempdir()-based solution.
+
+CHANGES IN PAA VERSION 0.99.0 [2014-08-03]:
+-----------------------------------------------
+GENERAL
+* NEWS file added.
+* Vignette completed.
+* Documentation completed.
+* General compatibility for Windows, Mac OS X and Linux ensured.
+
+NEW FEATURES
+* No changes.
+
+IMPROVEMENTS
+* No changes.
+
+MODIFICATIONS
+* No changes.
+
+BUG FIXES
+* No changes.
